@@ -3,8 +3,11 @@
   :min-lein-version "2.0.0"
   :license {:name "Apache License 2.0"}
 
-  :dependencies [[org.apache.cassandra/cassandra-all "1.1.0"]
-                 [me.prettyprint/hector-core "1.0-3"]
+  :dependencies [
+
+                 [com.twitter/maple "0.2.2"]
+                 [mysql/mysql-connector-java "5.1.18"]
+
                  ]
 
   :source-paths   ["src/main/clj"]

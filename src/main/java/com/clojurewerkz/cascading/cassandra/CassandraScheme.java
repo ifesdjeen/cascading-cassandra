@@ -26,23 +26,29 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
   private static final Logger LOG = LoggerFactory.getLogger(CassandraScheme.class);
 
   public CassandraScheme(Fields valueFields, String columnFamilyName) {
+      LOG.info("1");
+
   }
 
   @Override
   public void sourceConfInit(FlowProcess<JobConf> process, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf) {
+      LOG.info("1");
   }
 
   @Override
   public void sinkConfInit(FlowProcess<JobConf> process, Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf) {
+      LOG.info("1");
   }
 
   @Override
   public boolean source(FlowProcess<JobConf> flowProcess, SourceCall<Object[], RecordReader> sourceCall) throws IOException {
+      LOG.info("1");
       return CassandraSource.source(flowProcess, sourceCall);
   }
 
   @Override
   public void sink(FlowProcess<JobConf> flowProcess, SinkCall<Object[], OutputCollector> sinkCall) throws IOException {
+      LOG.info("1");
 
   }
 

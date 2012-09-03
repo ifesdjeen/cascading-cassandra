@@ -41,8 +41,18 @@ public class CassandraTap extends Tap<JobConf, RecordReader, OutputCollector> {
 
     public CassandraTap(String keyspace, String columnFamilyName, CassandraScheme scheme, SinkMode sinkMode) {
         super(scheme, sinkMode);
+        LOG.info("Created Tap");
+
         this.keyspace = keyspace;
         this.columnFamilyName = columnFamilyName;
+    }
+
+    @Override
+    public boolean isSink()
+    {
+        LOG.info("is Sink?");
+
+        return true;
     }
 
     @Override
@@ -51,12 +61,25 @@ public class CassandraTap extends Tap<JobConf, RecordReader, OutputCollector> {
     }
 
     @Override
+    public void sourceConfInit( FlowProcess<JobConf> process, JobConf conf ) {
+        LOG.info("Source conf init");
+    }
+
+    @Override
+    public void sinkConfInit( FlowProcess<JobConf> process, JobConf conf ) {
+        LOG.info("Sink conf init");
+    }
+
+    @Override
     public TupleEntryIterator openForRead(FlowProcess<JobConf> jobConfFlowProcess, RecordReader recordReader) throws IOException {
+        LOG.info("Opening for read");
         return new HadoopTupleEntrySchemeIterator(jobConfFlowProcess, this, recordReader);
     }
 
     @Override
     public TupleEntryCollector openForWrite(FlowProcess<JobConf> jobConfFlowProcess, OutputCollector outputCollector) throws IOException {
+        LOG.info("Open For Write");
+
         return null;
     }
 
@@ -72,16 +95,22 @@ public class CassandraTap extends Tap<JobConf, RecordReader, OutputCollector> {
 
     @Override
     public boolean resourceExists(JobConf jobConf) throws IOException {
+        LOG.info("Checking resource Existence");
+
         return true;
     }
 
     @Override
     public boolean deleteResource(JobConf jobConf) throws IOException {
+        LOG.info("Deleting resource");
+
         return true;
     }
 
     @Override
     public boolean createResource(JobConf jobConf) throws IOException {
+        LOG.info("Creating resource");
+
         return true;
     }
 }
