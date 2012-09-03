@@ -14,7 +14,7 @@
                    :focus   :focus
                    :default (constantly true)}
   :aot [com.clojurewerkz.cascading.cassandra.tap]
-  :javac-options     ["-target" "1.6" "-source" "1.6"]
+  :javac-options     ["-target" "1.6" "-source" "1.6" "-Xlint:deprecation"]
   :profiles {:dev {
                    :dependencies [[cascading/cascading-hadoop "2.0.0"
                                    :exclusions [org.codehaus.janino/janino
