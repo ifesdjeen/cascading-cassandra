@@ -17,11 +17,8 @@
 
 (defn tap-sink
   [flow sink]
-  (println "I AM SINK")
   true)
 
 (defn tap-source
   [flow sink]
-  (println "I AM SOURCE")
-  (println flow sink)
   true)

@@ -9,14 +9,13 @@ import cascading.tap.SinkMode;
 import cascading.tap.Tap;
 import cascading.tap.TapException;
 
-import cascading.tuple.TupleEntrySchemeCollector;
-import cascading.tuple.TupleEntrySchemeIterator;
+import cascading.tap.hadoop.io.HadoopTupleEntrySchemeCollector;
+import cascading.tap.hadoop.io.HadoopTupleEntrySchemeIterator;
 
 import cascading.tuple.TupleEntryCollector;
 import cascading.tuple.TupleEntryIterator;
 
-import java.util.Properties;
-// import org.apache.hadoop.mapred.Properties;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.OutputCollector;
 
@@ -27,7 +26,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 
-public class CassandraTap extends Tap<Properties, RecordReader, OutputCollector> {
+public class CassandraTap extends Tap<JobConf, RecordReader, OutputCollector> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CassandraTap.class);
 
@@ -42,7 +41,6 @@ public class CassandraTap extends Tap<Properties, RecordReader, OutputCollector>
 
     public CassandraTap(String keyspace, String columnFamilyName, CassandraScheme scheme, SinkMode sinkMode) {
         super(scheme, sinkMode);
-        LOG.info("Initializing Cassandra Tap {} {}", keyspace, columnFamilyName);
         this.keyspace = keyspace;
         this.columnFamilyName = columnFamilyName;
     }
@@ -53,14 +51,12 @@ public class CassandraTap extends Tap<Properties, RecordReader, OutputCollector>
     }
 
     @Override
-    public TupleEntryIterator openForRead(FlowProcess<Properties> jobConfFlowProcess, RecordReader recordReader) throws IOException {
-        LOG.info("Opening for read");
-        return new TupleEntrySchemeIterator<Properties, RecordReader>(jobConfFlowProcess, getScheme(), recordReader);
+    public TupleEntryIterator openForRead(FlowProcess<JobConf> jobConfFlowProcess, RecordReader recordReader) throws IOException {
+        return new HadoopTupleEntrySchemeIterator(jobConfFlowProcess, this, recordReader);
     }
 
     @Override
-    public TupleEntryCollector openForWrite(FlowProcess<Properties> jobConfFlowProcess, OutputCollector outputCollector) throws IOException {
-        LOG.info("Opening for write");
+    public TupleEntryCollector openForWrite(FlowProcess<JobConf> jobConfFlowProcess, OutputCollector outputCollector) throws IOException {
         return null;
     }
 
@@ -70,36 +66,22 @@ public class CassandraTap extends Tap<Properties, RecordReader, OutputCollector>
     }
 
     @Override
-    public long getModifiedTime(Properties jobConf) throws IOException {
+    public long getModifiedTime(JobConf jobConf) throws IOException {
         return System.currentTimeMillis();
     }
 
     @Override
-    public boolean resourceExists(Properties jobConf) throws IOException {
-        LOG.info("Checking for resource existence");
+    public boolean resourceExists(JobConf jobConf) throws IOException {
         return true;
     }
 
     @Override
-    public boolean deleteResource(Properties jobConf) throws IOException {
-        LOG.info("Deleting resource");
+    public boolean deleteResource(JobConf jobConf) throws IOException {
         return true;
     }
 
     @Override
-    public boolean createResource(Properties jobConf) throws IOException {
-        LOG.info("Creating resource");
+    public boolean createResource(JobConf jobConf) throws IOException {
         return true;
-    }
-
-
-    @Override
-    public void sourceConfInit(FlowProcess<Properties> process, Properties conf) {
-        LOG.info("Initializing source conf");
-
-    }
-
-    public void sinkConfInit(FlowProcess<Properties> process, Properties conf) {
-        LOG.info("Initializing sink conf");
     }
 }
