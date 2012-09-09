@@ -11,12 +11,16 @@
 
                  [clojurewerkz/cassaforte "1.0.0-SNAPSHOT"]
 
+                 [com.twitter/maple "0.2.3"]
+                 [mysql/mysql-connector-java "5.1.18"]
+
                  [cascalog "1.10.0"]
 
                  [midje "1.3.0" :exclude [org.clojure/clojure]]
                  [midje-cascalog "0.4.0" :exclude [org.clojure/clojure]]
                  ]
 
+  :main com.clojurewerkz.cascading.cassandra.core
   :source-paths   ["src/main/clj"]
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]

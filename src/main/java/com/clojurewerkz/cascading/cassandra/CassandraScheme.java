@@ -102,17 +102,14 @@ String columnFamily, List<String> columnFieldNames) {
 
     SortedMap<ByteBuffer, IColumn> columns = (SortedMap<ByteBuffer, IColumn>) value;
 
-    String rowkey_str = ByteBufferUtil.string(rowkey);
-
-    result.add(rowkey_str);
+    result.add(ByteBufferUtil.string(rowkey));
 
     for (String columnFieldName: columnFieldNames) {
         IColumn col = columns.get(ByteBufferUtil.bytes(columnFieldName));
         if (col != null) {
-            // LOG.info(ByteBufferUtil.string(ByteBufferUtil.clone(col.value())));
-            result.add(ByteBufferUtil.string(ByteBufferUtil.clone(col.value())));
+            result.add(ByteBufferUtil.string(col.value()));
         } else {
-            result.add(null);
+            result.add(" ");
         }
     }
     sourceCall.getIncomingEntry().setTuple(result);
@@ -151,6 +148,7 @@ OutputCollector> sinkCall)
       ConfigHelper.setInputInitialAddress(conf, host);
       ConfigHelper.setInputPartitioner(conf, "org.apache.cassandra.dht.ByteOrderedPartitioner");
       ConfigHelper.setInputColumnFamily(conf, keyspace, columnFamily);
+      conf.setInt(ColumnFamilyInputFormat.CASSANDRA_HADOOP_MAX_KEY_SIZE, 60);
 
       List<ByteBuffer> columnNames = new ArrayList<ByteBuffer>();
       for (String columnFieldName: columnFieldNames) {

@@ -17,6 +17,7 @@ import cascading.tuple.TupleEntryIterator;
 import cascading.tuple.TupleEntrySchemeIterator;
 import cascading.tuple.TupleEntryCollector;
 
+import com.clojurewerkz.cascading.cassandra.hadoop.CassandraCollector;
 import java.io.IOException;
 
 public class CassandraTap extends Tap<JobConf, RecordReader, OutputCollector> {
@@ -35,17 +36,20 @@ public class CassandraTap extends Tap<JobConf, RecordReader, OutputCollector> {
   }
 
   @Override
-      public TupleEntryIterator openForRead(FlowProcess<JobConf> jobConfFlowProcess, RecordReader recordReader) throws IOException {
-      return new HadoopTupleEntrySchemeIterator(jobConfFlowProcess, this , recordReader);
+  public TupleEntryIterator openForRead(FlowProcess<JobConf> flowProcess, RecordReader recordReader) throws IOException {
+      return new HadoopTupleEntrySchemeIterator(flowProcess, this , recordReader);
   }
 
   @Override
-  public TupleEntryCollector openForWrite(FlowProcess<JobConf> jobConfFlowProcess, OutputCollector outputCollector) throws IOException {
-      throw new UnsupportedOperationException("TODO");
+  public TupleEntryCollector openForWrite(FlowProcess<JobConf> flowProcess, OutputCollector outputCollector) throws IOException {
+      CassandraCollector cassandraCollector = new CassandraCollector( flowProcess, this );
+
+      cassandraCollector.prepare();
+      return cassandraCollector;
   }
 
 
-      @Override
+  @Override
   public boolean createResource(JobConf jobConf) throws IOException {
           // TODO
     return true;
