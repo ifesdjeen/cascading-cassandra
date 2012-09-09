@@ -15,10 +15,13 @@ import cascading.util.Util;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.BytesWritable;
 
 import com.clojurewerkz.cascading.cassandra.hadoop.ColumnFamilyInputFormat;
+import com.clojurewerkz.cascading.cassandra.hadoop.ColumnFamilyOutputFormat;
 import com.clojurewerkz.cascading.cassandra.hadoop.ConfigHelper;
 import java.io.IOException;
 import java.util.Arrays;
@@ -53,7 +56,7 @@ Object[]> {
 
 
     public CassandraScheme(String host, String port, String keyspace,
-String columnFamily, List<String> columnFieldNames) {
+                           String columnFamily, List<String> columnFieldNames) {
 
       this.host = host;
       this.port = port;
@@ -117,22 +120,66 @@ String columnFamily, List<String> columnFieldNames) {
 
   }
 
-
+  protected ByteBuffer serialize(Object obj) {
+      // BytesWritable bw = (BytesWritable) obj;
+      // return ByteBuffer.wrap(bw.getBytes(), 0, bw.getLength());
+      return ByteBufferUtil.bytes((String) obj);
+    }
   @Override
-  public void sink(FlowProcess<JobConf> flowProcess, SinkCall<Object[],
-OutputCollector> sinkCall)
-      throws IOException {
+  public void sink(FlowProcess<JobConf> flowProcess,
+                   SinkCall<Object[], OutputCollector> sinkCall) throws IOException {
       System.out.println("sink");
-    TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
-    OutputCollector outputCollector = sinkCall.getOutput();
-    throw new UnsupportedOperationException("TODO");
-    //outputCollector.collect(null, put);
+
+      TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
+      OutputCollector outputCollector = sinkCall.getOutput();
+
+      Tuple key = tupleEntry.selectTuple(new Fields("?value1"));
+      ByteBuffer keyBuffer =  serialize(key.get(0));
+
+      int nfields = columnFieldNames.size();
+      List mutations = new ArrayList<Mutation>(nfields);
+
+      for (String columnFieldName: columnFieldNames) {
+          LOG.info("Column filed name {}", columnFieldName);
+          LOG.info("Column filed value {}", tupleEntry.get(columnFieldName));
+          Mutation mutation = createColumnPutMutation(serialize(columnFieldName),
+                                                      serialize(tupleEntry.get(columnFieldName)));
+          mutations.add(mutation);
+      }
+
+      outputCollector.collect(keyBuffer, mutations);
   }
+
+    protected Mutation createColumnPutMutation(
+            ByteBuffer name, ByteBuffer value) {
+        Column column = new Column(name);
+        column.setName(name);
+        column.setValue(value);
+        column.setTimestamp(System.currentTimeMillis());
+
+        Mutation m = new Mutation();
+        ColumnOrSuperColumn columnOrSuperColumn = new ColumnOrSuperColumn();
+        columnOrSuperColumn.setColumn(column);
+        m.setColumn_or_supercolumn(columnOrSuperColumn);
+
+        return m;
+    }
 
   @Override
   public void sinkConfInit(FlowProcess<JobConf> process,
-      Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf) {
-      System.out.println("sinkConfInit");
+                           Tap<JobConf, RecordReader, OutputCollector> tap,
+                           JobConf conf) {
+    conf.setOutputFormat(ColumnFamilyOutputFormat.class);
+
+    ConfigHelper.setRangeBatchSize(conf, 100);
+
+    ConfigHelper.setOutputRpcPort(conf, port);
+    ConfigHelper.setOutputInitialAddress(conf, host);
+    ConfigHelper.setOutputPartitioner(conf, "org.apache.cassandra.dht.ByteOrderedPartitioner");
+    ConfigHelper.setOutputColumnFamily(conf, keyspace, columnFamily);
+    conf.setInt(ColumnFamilyInputFormat.CASSANDRA_HADOOP_MAX_KEY_SIZE, 60);
+
+    FileOutputFormat.setOutputPath(conf, getPath());
   }
 
   @Override

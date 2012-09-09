@@ -80,14 +80,14 @@ public class CassandraTap extends Tap<JobConf, RecordReader, OutputCollector> {
   @Override
       public boolean isSource()
   {
-      return true;
-
+      // return true;
+      return false;
   }
   @Override
       public boolean isSink()
   {
-      return false;
-
+      // return false;
+      return true;
   }
 
         @Override
