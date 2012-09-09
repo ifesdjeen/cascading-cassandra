@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: hadoop-util:hadoop-util:0.2.8">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/hadoop-util/hadoop-util/0.2.8/hadoop-util-0.2.8.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/hadoop-util/hadoop-util/0.2.8/hadoop-util-0.2.8-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/hadoop-util/hadoop-util/0.2.8/hadoop-util-0.2.8-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

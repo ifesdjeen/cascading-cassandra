@@ -1,6 +1,7 @@
 (ns com.clojurewerkz.cascading.cassandra.tap
   (:import [clojure.lang PersistentHashMap]
            [cascading.flow.FlowProcess]
+           [cascading.tuple Tuple]
            [cascading.scheme SinkCall SourceCall]
            [java.lang String]))
 
@@ -20,5 +21,20 @@
   true)
 
 (defn tap-source
-  [flow sink]
-  true)
+  [flow source-call]
+  (let [tuple (Tuple.)
+        context (.getContext source-call)
+        key (get context 0)
+        value (get context 1)
+        input (.getInput source-call)
+        result (.next input key value)]
+    (if result
+      false
+      (do
+        (println "====================================================================================================")
+        (println key)
+        (println value)
+        (println "====================================================================================================")
+        true))
+    )
+)
