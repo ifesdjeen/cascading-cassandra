@@ -31,8 +31,9 @@
                             :primary-key :name)
 
   (sch/create-index "libraries" :language)
-  (cql/insert "libraries" {:name "Cassaforte" :language "Clojure"})
-  (cql/insert "libraries" {:name "Riak" :language "Erlang"})
+  (dotimes [n 300]
+    (cql/insert "libraries" {:name (str "Cassaforte" n) :language (str "Clojure" n)}))
+
 
   (testing ""
     (let [scheme (CassandraScheme. "127.0.0.1" "9160" "CassaforteTest1" "libraries" (java.util.ArrayList. ["name" "language"]))
@@ -42,10 +43,9 @@
                      ["field2-1" "field2-2" "field2-3"]
                      ["field3-1" "field3-2" "field3-3"]]]
 
-      (?<-
-             (stdout)
-             [?value1 ?value2 ?value3]
-             (tap ?value1 ?value2 ?value3))
+      (?<- (stdout)
+           [?value1 ?value2 ?value3]
+           (tap ?value1 ?value2 ?value3))
       (comment (fact ""
                      (?<-
                       (stdout)

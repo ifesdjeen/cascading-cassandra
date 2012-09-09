@@ -18,8 +18,8 @@ import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.fs.Path;
 
-import org.apache.cassandra.hadoop.ColumnFamilyInputFormat;
-import org.apache.cassandra.hadoop.ConfigHelper;
+import com.clojurewerkz.cascading.cassandra.hadoop.ColumnFamilyInputFormat;
+import com.clojurewerkz.cascading.cassandra.hadoop.ConfigHelper;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -70,10 +70,8 @@ String columnFamily, List<String> columnFieldNames) {
   public void sourcePrepare(FlowProcess<JobConf> flowProcess,
       SourceCall<Object[], RecordReader> sourceCall) {
 
-      ByteBuffer key =
-ByteBufferUtil.clone((ByteBuffer)sourceCall.getInput().createKey());
-      SortedMap<ByteBuffer, IColumn> value = (SortedMap<ByteBuffer,
-IColumn>)sourceCall.getInput().createValue();
+      ByteBuffer key = ByteBufferUtil.clone((ByteBuffer)sourceCall.getInput().createKey());
+      SortedMap<ByteBuffer, IColumn> value = (SortedMap<ByteBuffer, IColumn>)sourceCall.getInput().createValue();
 
       Object[] obj = new Object[]{key, value};
 
@@ -82,7 +80,7 @@ IColumn>)sourceCall.getInput().createValue();
 
   @Override
   public void sourceCleanup(FlowProcess<JobConf> flowProcess,
-      SourceCall<Object[], RecordReader> sourceCall) {
+                            SourceCall<Object[], RecordReader> sourceCall) {
       sourceCall.setContext(null);
   }
 
@@ -111,7 +109,7 @@ IColumn>)sourceCall.getInput().createValue();
     for (String columnFieldName: columnFieldNames) {
         IColumn col = columns.get(ByteBufferUtil.bytes(columnFieldName));
         if (col != null) {
-            LOG.info(ByteBufferUtil.string(ByteBufferUtil.clone(col.value())));
+            // LOG.info(ByteBufferUtil.string(ByteBufferUtil.clone(col.value())));
             result.add(ByteBufferUtil.string(ByteBufferUtil.clone(col.value())));
         } else {
             result.add(null);
@@ -151,7 +149,7 @@ OutputCollector> sinkCall)
       ConfigHelper.setInputSplitSize(conf, 30);
       ConfigHelper.setInputRpcPort(conf, port);
       ConfigHelper.setInputInitialAddress(conf, host);
-      ConfigHelper.setInputPartitioner(conf, "OrderPreservingPartitioner");
+      ConfigHelper.setInputPartitioner(conf, "org.apache.cassandra.dht.ByteOrderedPartitioner");
       ConfigHelper.setInputColumnFamily(conf, keyspace, columnFamily);
 
       List<ByteBuffer> columnNames = new ArrayList<ByteBuffer>();
@@ -159,10 +157,9 @@ OutputCollector> sinkCall)
           columnNames.add(ByteBufferUtil.bytes(columnFieldName));
       }
 
-      SlicePredicate predicate = new
-SlicePredicate().setColumn_names(columnNames);
+      SlicePredicate predicate = new SlicePredicate().setColumn_names(columnNames);
       ConfigHelper.setInputSlicePredicate(conf, predicate);
-
+      // ConfigHelper.setInputSplitSize(conf, 3);
   }
 
   public Path getPath() {
