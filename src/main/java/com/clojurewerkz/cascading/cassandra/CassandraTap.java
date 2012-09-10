@@ -78,38 +78,25 @@ public class CassandraTap extends Tap<JobConf, RecordReader, OutputCollector> {
   }
 
   @Override
-      public boolean isSource()
-  {
-      // return true;
-      return false;
+  public boolean equals(Object other) {
+          if( this == other )
+              return true;
+          if( !( other instanceof CassandraTap ) )
+              return false;
+          if( !super.equals( other ) )
+              return false;
+
+          CassandraTap otherTap = (CassandraTap) other;
+          if (!otherTap.getIdentifier().equals(getIdentifier())) return false;
+
+          return true;
   }
+
   @Override
-      public boolean isSink()
-  {
-      // return false;
-      return true;
+  public int hashCode(){
+      int result = super.hashCode();
+      result = 31 * result + getIdentifier().hashCode();
+
+      return result;
   }
-
-        @Override
-    public boolean equals(Object other) {
-            if( this == other )
-                return true;
-            if( !( other instanceof CassandraTap ) )
-                return false;
-            if( !super.equals( other ) )
-                return false;
-
-            CassandraTap otherTap = (CassandraTap) other;
-            if (!otherTap.getIdentifier().equals(getIdentifier())) return false;
-
-            return true;
-    }
-
-    @Override
-    public int hashCode(){
-        int result = super.hashCode();
-        result = 31 * result + getIdentifier().hashCode();
-
-        return result;
-    }
 }

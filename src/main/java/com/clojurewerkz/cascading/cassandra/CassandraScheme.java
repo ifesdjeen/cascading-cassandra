@@ -7,7 +7,10 @@ import cascading.flow.FlowProcess;
 import cascading.scheme.Scheme;
 import cascading.scheme.SinkCall;
 import cascading.scheme.SourceCall;
+
 import cascading.tap.Tap;
+import cascading.tap.SinkMode;
+
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
@@ -23,11 +26,14 @@ import org.apache.hadoop.io.BytesWritable;
 import com.clojurewerkz.cascading.cassandra.hadoop.ColumnFamilyInputFormat;
 import com.clojurewerkz.cascading.cassandra.hadoop.ColumnFamilyOutputFormat;
 import com.clojurewerkz.cascading.cassandra.hadoop.ConfigHelper;
+import com.clojurewerkz.cascading.cassandra.hadoop.CassandraHelper;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.SortedMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,48 +43,51 @@ import java.nio.ByteBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.clojurewerkz.cascading.cassandra.CassandraSource;
-
 import org.apache.cassandra.db.IColumn;
 
-public class CassandraScheme
-    extends Scheme<JobConf, RecordReader, OutputCollector, Object[],
-Object[]> {
+public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollector, Object[], Object[]> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CassandraTap.class);
+    private static final Logger logger = LoggerFactory.getLogger(CassandraTap.class);
 
     private String pathUUID;
     private String host;
     private String port;
     private String keyspace;
     private String columnFamily;
+    private String keyColumnName;
     private List<String> columnFieldNames;
 
+    private CassandraHelper helper;
 
-    public CassandraScheme(String host, String port, String keyspace,
-                           String columnFamily, List<String> columnFieldNames) {
+    // Use this constructor when using CassandraScheme as a Source
+    public CassandraScheme(String host, String port, String keyspace, String columnFamily, String keyColumnName, List<String> columnFieldNames) {
+        this(host, port, keyspace, columnFamily, keyColumnName, columnFieldNames, null);
+    }
 
-      this.host = host;
-      this.port = port;
-      this.keyspace = keyspace;
-      this.columnFamily = columnFamily;
-      this.columnFieldNames = columnFieldNames;
-
-      this.pathUUID = UUID.randomUUID().toString();
-      //setSourceFields(new Fields("text3")); // default is unknown
-      //setSinkFields
-  }
+    // Use this constructor when using CassandraScheme as a Sink
+    public CassandraScheme(String host, String port, String keyspace, String columnFamily, String keyColumnName,
+                           List<String> columnFieldNames, HashMap<String,String> fieldMappings) {
+        this.host = host;
+        this.port = port;
+        this.keyspace = keyspace;
+        this.columnFamily = columnFamily;
+        this.columnFieldNames = columnFieldNames;
+        this.keyColumnName = keyColumnName;
+        this.pathUUID = UUID.randomUUID().toString();
+    }
 
   @Override
   public void sourcePrepare(FlowProcess<JobConf> flowProcess,
-      SourceCall<Object[], RecordReader> sourceCall) {
+                            SourceCall<Object[], RecordReader> sourceCall) {
+
+      this.helper = new CassandraHelper(this.host, Integer.parseInt(this.port), this.keyspace, this.columnFamily);
 
       ByteBuffer key = ByteBufferUtil.clone((ByteBuffer)sourceCall.getInput().createKey());
       SortedMap<ByteBuffer, IColumn> value = (SortedMap<ByteBuffer, IColumn>)sourceCall.getInput().createValue();
 
       Object[] obj = new Object[]{key, value};
 
-    sourceCall.setContext(obj);
+      sourceCall.setContext(obj);
   }
 
   @Override
@@ -90,8 +99,6 @@ Object[]> {
   @Override
   public boolean source(FlowProcess<JobConf> flowProcess,
                         SourceCall<Object[], RecordReader> sourceCall) throws IOException {
-      // return CassandraSource.source(flowProcess, sourceCall);
-
     Tuple result = new Tuple();
 
     Object key = sourceCall.getContext()[0];
@@ -100,7 +107,6 @@ Object[]> {
     ByteBuffer rowkey = ByteBufferUtil.clone((ByteBuffer)key);
     boolean hasNext = sourceCall.getInput().next(rowkey, value);
 
-    // boolean hasNext = sourceCall.getInput().nextKeyValue();
     if (!hasNext) { return false; }
 
     SortedMap<ByteBuffer, IColumn> columns = (SortedMap<ByteBuffer, IColumn>) value;
@@ -110,9 +116,11 @@ Object[]> {
     for (String columnFieldName: columnFieldNames) {
         IColumn col = columns.get(ByteBufferUtil.bytes(columnFieldName));
         if (col != null) {
-            result.add(ByteBufferUtil.string(col.value()));
-        } else {
-            result.add(" ");
+
+            result.add(this.helper.getTypeForColumn(col).compose(col.value()));
+            // result.add(ByteBufferUtil.string(col.value()));
+        } else if (columnFieldName != this.keyColumnName) {
+            result.add("");
         }
     }
     sourceCall.getIncomingEntry().setTuple(result);
@@ -124,7 +132,8 @@ Object[]> {
       // BytesWritable bw = (BytesWritable) obj;
       // return ByteBuffer.wrap(bw.getBytes(), 0, bw.getLength());
       return ByteBufferUtil.bytes((String) obj);
-    }
+  }
+
   @Override
   public void sink(FlowProcess<JobConf> flowProcess,
                    SinkCall<Object[], OutputCollector> sinkCall) throws IOException {
@@ -140,8 +149,8 @@ Object[]> {
       List mutations = new ArrayList<Mutation>(nfields);
 
       for (String columnFieldName: columnFieldNames) {
-          LOG.info("Column filed name {}", columnFieldName);
-          LOG.info("Column filed value {}", tupleEntry.get(columnFieldName));
+          logger.info("Column filed name {}", columnFieldName);
+          logger.info("Column filed value {}", tupleEntry.get(columnFieldName));
           Mutation mutation = createColumnPutMutation(serialize(columnFieldName),
                                                       serialize(tupleEntry.get(columnFieldName)));
           mutations.add(mutation);

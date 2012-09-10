@@ -17,8 +17,7 @@
                  [cascalog "1.10.0"]
 
                  [midje "1.3.0" :exclude [org.clojure/clojure]]
-                 [midje-cascalog "0.4.0" :exclude [org.clojure/clojure]]
-                 ]
+                 [midje-cascalog "0.4.0" :exclude [org.clojure/clojure]]]
 
   :main com.clojurewerkz.cascading.cassandra.core
   :source-paths   ["src/main/clj"]

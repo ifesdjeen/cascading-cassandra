@@ -563,4 +563,5 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
     {
         return (long)iter.rowsRead();
     }
+
 }
