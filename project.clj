@@ -19,14 +19,14 @@
                  [midje "1.3.0" :exclude [org.clojure/clojure]]
                  [midje-cascalog "0.4.0" :exclude [org.clojure/clojure]]]
 
-  :main com.clojurewerkz.cascading.cassandra.core
+  ;; :main com.clojurewerkz.cascading.cassandra.core
   :source-paths   ["src/main/clj"]
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
   :test-selectors {:all     (constantly true)
                    :focus   :focus
                    :default (constantly true)}
-  :aot [com.clojurewerkz.cascading.cassandra.tap]
+  :aot [com.clojurewerkz.cascading.cassandra.tap com.clojurewerkz.cascading.cassandra.core]
   :javac-options     ["-target" "1.7" "-source" "1.7"]
   :repositories {
                  "conjars" "http://conjars.org/repo/"
