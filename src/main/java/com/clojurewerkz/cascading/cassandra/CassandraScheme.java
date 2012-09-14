@@ -141,8 +141,6 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     @Override
     public void sink(FlowProcess<JobConf> flowProcess,
                      SinkCall<Object[], OutputCollector> sinkCall) throws IOException {
-        System.out.println("sink");
-
         TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
         OutputCollector outputCollector = sinkCall.getOutput();
 
