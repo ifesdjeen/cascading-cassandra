@@ -1,9 +1,6 @@
 package com.clojurewerkz.cascading.cassandra;
 
 import cascading.tap.Tap;
-import cascading.scheme.Scheme;
-
-import cascading.tap.SinkMode;
 
 import cascading.flow.FlowProcess;
 
@@ -14,7 +11,6 @@ import org.apache.hadoop.mapred.OutputCollector;
 import cascading.tap.hadoop.io.HadoopTupleEntrySchemeIterator;
 
 import cascading.tuple.TupleEntryIterator;
-import cascading.tuple.TupleEntrySchemeIterator;
 import cascading.tuple.TupleEntryCollector;
 
 import com.clojurewerkz.cascading.cassandra.hadoop.CassandraCollector;

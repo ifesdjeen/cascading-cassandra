@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.google.common.collect.*;
+import org.apache.thrift.transport.TTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +47,9 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
+
+import org.apache.cassandra.hadoop.ConfigHelper;
+import org.apache.cassandra.hadoop.ColumnFamilySplit;
 
 public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap<ByteBuffer, IColumn>>
         implements org.apache.hadoop.mapred.RecordReader<ByteBuffer, SortedMap<ByteBuffer, IColumn>> {
@@ -145,9 +149,9 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
             // create connection using thrift
             String location = getLocation();
             socket = new TSocket(location, ConfigHelper.getInputRpcPort(conf));
-            TBinaryProtocol binaryProtocol = new TBinaryProtocol(new TFramedTransport(socket));
+            TTransport transport = ConfigHelper.getInputTransportFactory(conf).openTransport(socket);
+            TBinaryProtocol binaryProtocol = new TBinaryProtocol(transport);
             client = new Cassandra.Client(binaryProtocol);
-            socket.open();
 
             // log in
             client.set_keyspace(keyspace);
@@ -281,27 +285,6 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
         protected String startToken;
 
         private void maybeInit() {
-            // check if we need another batch
-            // if (rows != null && i < rows.size())
-            //     return;
-
-
-            // if (totalRead == 0)
-            // {
-            //     // first request
-            //     startToken = split.getStartToken();
-            // }
-            // else
-            // {
-            //     startToken = partitioner.getTokenFactory().toString(partitioner.getToken(Iterables.getLast(rows).key));
-
-            //     if (startToken.equals(split.getEndToken()))
-            //     {
-            //         // reached end of the split
-            //         rows = null;
-            //         return;
-            //     }
-            // }
             if (rows != null && i >= rows.size())
                 rows = null;
 
@@ -470,7 +453,7 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
         if (this.nextKeyValue()) {
             key.clear();
             key.put(this.getCurrentKey());
-            key.rewind();
+            key.flip();
 
             value.clear();
             value.putAll(this.getCurrentValue());
@@ -491,5 +474,4 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
     public long getPos() throws IOException {
         return (long) iter.rowsRead();
     }
-
 }

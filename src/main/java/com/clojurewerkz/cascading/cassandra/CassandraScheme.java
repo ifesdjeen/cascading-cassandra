@@ -17,9 +17,10 @@ import cascading.tuple.TupleEntry;
 import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.fs.Path;
 
+import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat;
+import org.apache.cassandra.hadoop.ConfigHelper;
+
 import com.clojurewerkz.cascading.cassandra.hadoop.ColumnFamilyInputFormat;
-import com.clojurewerkz.cascading.cassandra.hadoop.ColumnFamilyOutputFormat;
-import com.clojurewerkz.cascading.cassandra.hadoop.ConfigHelper;
 import com.clojurewerkz.cascading.cassandra.hadoop.CassandraHelper;
 
 import java.io.IOException;
