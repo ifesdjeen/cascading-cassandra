@@ -6,7 +6,7 @@
   :dependencies [[cascading/cascading-hadoop "2.0.0"
                     :exclusions [org.codehaus.janino/janino
                                  org.apache.hadoop/hadoop-core]]
-                 [org.apache.cassandra/cassandra-all "1.1.4"]
+                 [org.apache.cassandra/cassandra-all "1.1.5"]
                  [org.apache.hadoop/hadoop-core "0.20.2-dev"]]
 
   :main com.clojurewerkz.cascading.cassandra.core
