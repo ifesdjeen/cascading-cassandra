@@ -9,7 +9,7 @@
   (:import [java.util.concurrent Executors])
   (:import [cascading.tuple Fields]
            [cascading.scheme Scheme]
-           [com.twitter.maple.jdbc JDBCTap JDBCScheme TableDesc]
+           ;; [com.twitter.maple.jdbc JDBCTap JDBCScheme TableDesc]
            [com.clojurewerkz.cascading.cassandra CassandraTap CassandraScheme]))
 
 
@@ -74,13 +74,13 @@
 (def staging-config {:host "10.1.12.13" :keyspace "CassaforteTest1"})
 
 
-(comment (defn -main
-           []
-           (let [settings local-config]
-             ;; (create-test-column-family settings)
-             ;; (populate-test-column-family settings 1000)
-             (use-test-db-as-source)
-             )))
+(defn -main
+  []
+  (let [settings local-config]
+    (create-test-column-family settings)
+    (populate-test-column-family settings 10)
+    (use-test-db-as-source settings)
+    ))
 
 (defmain WritePoemFreq []
   (let [settings local-config]
