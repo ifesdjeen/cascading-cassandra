@@ -55,24 +55,23 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Hadoop InputFormat allowing map/reduce against Cassandra rows within one ColumnFamily.
- *
+ * <p/>
  * At minimum, you need to set the CF and predicate (description of columns to extract from each row)
  * in your Hadoop job Configuration.  The ConfigHelper class is provided to make this
  * simple:
- *   ConfigHelper.setColumnFamily
- *   ConfigHelper.setSlicePredicate
- *
+ * ConfigHelper.setColumnFamily
+ * ConfigHelper.setSlicePredicate
+ * <p/>
  * You can also configure the number of rows per InputSplit with
- *   ConfigHelper.setInputSplitSize
+ * ConfigHelper.setInputSplitSize
  * This should be "as big as possible, but no bigger."  Each InputSplit is read from Cassandra
  * with multiple get_slice_range queries, and the per-call overhead of get_slice_range is high,
  * so larger split sizes are better -- but if it is too large, you will run out of memory.
- *
+ * <p/>
  * The default split size is 64k rows.
  */
 public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<ByteBuffer, IColumn>>
-    implements org.apache.hadoop.mapred.InputFormat<ByteBuffer, SortedMap<ByteBuffer, IColumn>>
-{
+        implements org.apache.hadoop.mapred.InputFormat<ByteBuffer, SortedMap<ByteBuffer, IColumn>> {
     private static final Logger logger = LoggerFactory.getLogger(ColumnFamilyInputFormat.class);
 
     public static final String MAPRED_TASK_ID = "mapred.task.id";
@@ -81,20 +80,17 @@ public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<B
     // I choose 8kb as the default max key size (instanciated only once), but you can
     // override it in your jobConf with this setting.
     public static final String CASSANDRA_HADOOP_MAX_KEY_SIZE = "cassandra.hadoop.max_key_size";
-    public static final int    CASSANDRA_HADOOP_MAX_KEY_SIZE_DEFAULT = 8192;
+    public static final int CASSANDRA_HADOOP_MAX_KEY_SIZE_DEFAULT = 8192;
 
     private String keyspace;
     private String cfName;
     private IPartitioner partitioner;
 
-    private static void validateConfiguration(Configuration conf)
-    {
-        if (ConfigHelper.getInputKeyspace(conf) == null || ConfigHelper.getInputColumnFamily(conf) == null)
-        {
+    private static void validateConfiguration(Configuration conf) {
+        if (ConfigHelper.getInputKeyspace(conf) == null || ConfigHelper.getInputColumnFamily(conf) == null) {
             throw new UnsupportedOperationException("you must set the keyspace and columnfamily with setColumnFamily()");
         }
-        if (ConfigHelper.getInputSlicePredicate(conf) == null)
-        {
+        if (ConfigHelper.getInputSlicePredicate(conf) == null) {
             throw new UnsupportedOperationException("you must set the predicate with setPredicate");
         }
         if (ConfigHelper.getInputInitialAddress(conf) == null)
@@ -103,8 +99,7 @@ public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<B
             throw new UnsupportedOperationException("You must set the Cassandra partitioner class");
     }
 
-    public List<InputSplit> getSplits(JobContext context) throws IOException
-    {
+    public List<InputSplit> getSplits(JobContext context) throws IOException {
         Configuration conf = context.getConfiguration();
 
         validateConfiguration(conf);
@@ -121,38 +116,30 @@ public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<B
         ExecutorService executor = Executors.newCachedThreadPool();
         List<InputSplit> splits = new ArrayList<InputSplit>();
 
-        try
-        {
+        try {
             List<Future<List<InputSplit>>> splitfutures = new ArrayList<Future<List<InputSplit>>>();
             KeyRange jobKeyRange = ConfigHelper.getInputKeyRange(conf);
             Range<Token> jobRange = null;
-            if (jobKeyRange != null && jobKeyRange.start_token != null)
-            {
+            if (jobKeyRange != null && jobKeyRange.start_token != null) {
                 assert partitioner.preservesOrder() : "ConfigHelper.setInputKeyRange(..) can only be used with a order preserving paritioner";
                 assert jobKeyRange.start_key == null : "only start_token supported";
                 assert jobKeyRange.end_key == null : "only end_token supported";
                 jobRange = new Range<Token>(partitioner.getTokenFactory().fromString(jobKeyRange.start_token),
-                                            partitioner.getTokenFactory().fromString(jobKeyRange.end_token),
-                                            partitioner);
+                        partitioner.getTokenFactory().fromString(jobKeyRange.end_token),
+                        partitioner);
             }
 
-            for (TokenRange range : masterRangeNodes)
-            {
-                if (jobRange == null)
-                {
+            for (TokenRange range : masterRangeNodes) {
+                if (jobRange == null) {
                     // for each range, pick a live owner and ask it to compute bite-sized splits
                     splitfutures.add(executor.submit(new SplitCallable(range, conf)));
-                }
-                else
-                {
+                } else {
                     Range<Token> dhtRange = new Range<Token>(partitioner.getTokenFactory().fromString(range.start_token),
-                                                             partitioner.getTokenFactory().fromString(range.end_token),
-                                                             partitioner);
+                            partitioner.getTokenFactory().fromString(range.end_token),
+                            partitioner);
 
-                    if (dhtRange.intersects(jobRange))
-                    {
-                        for (Range<Token> intersection: dhtRange.intersectionWith(jobRange))
-                        {
+                    if (dhtRange.intersects(jobRange)) {
+                        for (Range<Token> intersection : dhtRange.intersectionWith(jobRange)) {
                             range.start_token = partitioner.getTokenFactory().toString(intersection.left);
                             range.end_token = partitioner.getTokenFactory().toString(intersection.right);
                             // for each range, pick a live owner and ask it to compute bite-sized splits
@@ -163,20 +150,14 @@ public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<B
             }
 
             // wait until we have all the results back
-            for (Future<List<InputSplit>> futureInputSplits : splitfutures)
-            {
-                try
-                {
+            for (Future<List<InputSplit>> futureInputSplits : splitfutures) {
+                try {
                     splits.addAll(futureInputSplits.get());
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     throw new IOException("Could not get input splits", e);
                 }
             }
-        }
-        finally
-        {
+        } finally {
             executor.shutdownNow();
         }
 
@@ -189,20 +170,17 @@ public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<B
      * Gets a token range and splits it up according to the suggested
      * size into input splits that Hadoop can use.
      */
-    class SplitCallable implements Callable<List<InputSplit>>
-    {
+    class SplitCallable implements Callable<List<InputSplit>> {
 
         private final TokenRange range;
         private final Configuration conf;
 
-        public SplitCallable(TokenRange tr, Configuration conf)
-        {
+        public SplitCallable(TokenRange tr, Configuration conf) {
             this.range = tr;
             this.conf = conf;
         }
 
-        public List<InputSplit> call() throws Exception
-        {
+        public List<InputSplit> call() throws Exception {
             ArrayList<InputSplit> splits = new ArrayList<InputSplit>();
             List<String> tokens = getSubSplits(keyspace, cfName, range, conf);
             assert range.rpc_endpoints.size() == range.endpoints.size() : "rpc_endpoints size must match endpoints size";
@@ -210,8 +188,7 @@ public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<B
             String[] endpoints = range.endpoints.toArray(new String[range.endpoints.size()]);
             // hadoop needs hostname, not ip
             int endpointIndex = 0;
-            for (String endpoint: range.rpc_endpoints)
-            {
+            for (String endpoint : range.rpc_endpoints) {
                 String endpoint_address = endpoint;
                 if (endpoint_address == null || endpoint_address.equals("0.0.0.0"))
                     endpoint_address = range.endpoints.get(endpointIndex);
@@ -219,14 +196,12 @@ public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<B
             }
 
             Token.TokenFactory factory = partitioner.getTokenFactory();
-            for (int i = 1; i < tokens.size(); i++)
-            {
+            for (int i = 1; i < tokens.size(); i++) {
                 Token left = factory.fromString(tokens.get(i - 1));
                 Token right = factory.fromString(tokens.get(i));
                 Range<Token> range = new Range<Token>(left, right, partitioner);
                 List<Range<Token>> ranges = range.isWrapAround() ? range.unwrap() : ImmutableList.of(range);
-                for (Range<Token> subrange : ranges)
-                {
+                for (Range<Token> subrange : ranges) {
                     ColumnFamilySplit split = new ColumnFamilySplit(factory.toString(subrange.left), factory.toString(subrange.right), endpoints);
                     logger.debug("adding " + split);
                     splits.add(split);
@@ -236,32 +211,23 @@ public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<B
         }
     }
 
-    private List<String> getSubSplits(String keyspace, String cfName, TokenRange range, Configuration conf) throws IOException
-    {
+    private List<String> getSubSplits(String keyspace, String cfName, TokenRange range, Configuration conf) throws IOException {
         int splitsize = ConfigHelper.getInputSplitSize(conf);
-        for (int i = 0; i < range.rpc_endpoints.size(); i++)
-        {
+        for (int i = 0; i < range.rpc_endpoints.size(); i++) {
             String host = range.rpc_endpoints.get(i);
 
             if (host == null || host.equals("0.0.0.0"))
                 host = range.endpoints.get(i);
 
-            try
-            {
+            try {
                 Cassandra.Client client = ConfigHelper.createConnection(host, ConfigHelper.getInputRpcPort(conf), true);
                 client.set_keyspace(keyspace);
                 return client.describe_splits(cfName, range.start_token, range.end_token, splitsize);
-            }
-            catch (IOException e)
-            {
+            } catch (IOException e) {
                 logger.debug("failed connect to endpoint " + host, e);
-            }
-            catch (TException e)
-            {
+            } catch (TException e) {
                 throw new RuntimeException(e);
-            }
-            catch (InvalidRequestException e)
-            {
+            } catch (InvalidRequestException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -269,28 +235,21 @@ public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<B
     }
 
 
-    private List<TokenRange> getRangeMap(Configuration conf) throws IOException
-    {
+    private List<TokenRange> getRangeMap(Configuration conf) throws IOException {
         Cassandra.Client client = ConfigHelper.getClientFromInputAddressList(conf);
 
         List<TokenRange> map;
-        try
-        {
+        try {
             map = client.describe_ring(ConfigHelper.getInputKeyspace(conf));
-        }
-        catch (TException e)
-        {
+        } catch (TException e) {
             throw new RuntimeException(e);
-        }
-        catch (InvalidRequestException e)
-        {
+        } catch (InvalidRequestException e) {
             throw new RuntimeException(e);
         }
         return map;
     }
 
-    public RecordReader<ByteBuffer, SortedMap<ByteBuffer, IColumn>> createRecordReader(InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException
-    {
+    public RecordReader<ByteBuffer, SortedMap<ByteBuffer, IColumn>> createRecordReader(InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
         return new ColumnFamilyRecordReader();
     }
 
@@ -298,29 +257,25 @@ public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<B
     //
     // Old Hadoop API
     //
-    public org.apache.hadoop.mapred.InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException
-    {
+    public org.apache.hadoop.mapred.InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
         TaskAttemptContext tac = new TaskAttemptContext(jobConf, new TaskAttemptID());
         List<org.apache.hadoop.mapreduce.InputSplit> newInputSplits = this.getSplits(tac);
         org.apache.hadoop.mapred.InputSplit[] oldInputSplits = new org.apache.hadoop.mapred.InputSplit[newInputSplits.size()];
         for (int i = 0; i < newInputSplits.size(); i++)
-            oldInputSplits[i] = (ColumnFamilySplit)newInputSplits.get(i);
+            oldInputSplits[i] = (ColumnFamilySplit) newInputSplits.get(i);
         return oldInputSplits;
     }
 
-    public org.apache.hadoop.mapred.RecordReader<ByteBuffer, SortedMap<ByteBuffer, IColumn>> getRecordReader(org.apache.hadoop.mapred.InputSplit split, JobConf jobConf, final Reporter reporter) throws IOException
-    {
-        TaskAttemptContext tac = new TaskAttemptContext(jobConf, TaskAttemptID.forName(jobConf.get(MAPRED_TASK_ID)))
-        {
+    public org.apache.hadoop.mapred.RecordReader<ByteBuffer, SortedMap<ByteBuffer, IColumn>> getRecordReader(org.apache.hadoop.mapred.InputSplit split, JobConf jobConf, final Reporter reporter) throws IOException {
+        TaskAttemptContext tac = new TaskAttemptContext(jobConf, TaskAttemptID.forName(jobConf.get(MAPRED_TASK_ID))) {
             @Override
-            public void progress()
-            {
+            public void progress() {
                 reporter.progress();
             }
         };
 
         ColumnFamilyRecordReader recordReader = new ColumnFamilyRecordReader(jobConf.getInt(CASSANDRA_HADOOP_MAX_KEY_SIZE, CASSANDRA_HADOOP_MAX_KEY_SIZE_DEFAULT));
-        recordReader.initialize((org.apache.hadoop.mapreduce.InputSplit)split, tac);
+        recordReader.initialize((org.apache.hadoop.mapreduce.InputSplit) split, tac);
         return recordReader;
     }
 

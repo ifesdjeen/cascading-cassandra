@@ -24,23 +24,19 @@ package com.clojurewerkz.cascading.cassandra.hadoop;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 
-public class Progressable
-{
+public class Progressable {
     private TaskAttemptContext context;
     private org.apache.hadoop.util.Progressable progressable;
 
-    Progressable(TaskAttemptContext context)
-    {
+    Progressable(TaskAttemptContext context) {
         this.context = context;
     }
 
-    Progressable(org.apache.hadoop.util.Progressable progressable)
-    {
+    Progressable(org.apache.hadoop.util.Progressable progressable) {
         this.progressable = progressable;
     }
 
-    public void progress()
-    {
+    public void progress() {
         if (context != null)
             context.progress();
         else

@@ -33,29 +33,25 @@ public class CassandraHelper {
     private String keyspace;
     private String columnFamily;
 
-    private transient Cassandra.Client  _cassandraClient;
+    private transient Cassandra.Client _cassandraClient;
     private transient CfDef cfDef;
     private transient AbstractType keyType;
     private transient AbstractType defaultValidatorType;
     private transient Map<ByteBuffer, AbstractType> validatorsMap;
 
-    public CassandraHelper (String host, Integer port, String keyspace, String columnFamily) {
+    public CassandraHelper(String host, Integer port, String keyspace, String columnFamily) {
         this.cassandraHost = host;
         this.cassandraPort = port;
         this.keyspace = keyspace;
         this.columnFamily = columnFamily;
     }
 
-    public Cassandra.Client cassandraClient()
-    {
-        try
-        {
+    public Cassandra.Client cassandraClient() {
+        try {
             if (this._cassandraClient == null)
                 this._cassandraClient = createConnection(this.cassandraHost, this.cassandraPort, true);
             return this._cassandraClient;
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -63,31 +59,22 @@ public class CassandraHelper {
     public static Cassandra.Client createConnection(String host, Integer port, boolean framed) throws IOException {
         TSocket socket = new TSocket(host, port);
         TTransport trans = framed ? new TFramedTransport(socket) : socket;
-        try
-        {
+        try {
             trans.open();
-        }
-        catch (TTransportException e)
-        {
+        } catch (TTransportException e) {
             throw new IOException("unable to connect to server", e);
         }
         return new Cassandra.Client(new TBinaryProtocol(trans));
     }
 
 
-    public Map<ByteBuffer, AbstractType> makeValidatorMap(CfDef cfDef) throws IOException
-    {
+    public Map<ByteBuffer, AbstractType> makeValidatorMap(CfDef cfDef) throws IOException {
         TreeMap<ByteBuffer, AbstractType> validators = new TreeMap<ByteBuffer, AbstractType>();
-        for (ColumnDef cd : getCfDef().getColumn_metadata())
-        {
-            if (cd.getValidation_class() != null && !cd.getValidation_class().isEmpty())
-            {
-                try
-                {
+        for (ColumnDef cd : getCfDef().getColumn_metadata()) {
+            if (cd.getValidation_class() != null && !cd.getValidation_class().isEmpty()) {
+                try {
                     validators.put(cd.name, TypeParser.parse(cd.getValidation_class()));
-                }
-                catch (ConfigurationException e)
-                {
+                } catch (ConfigurationException e) {
                     throw new IOException(e);
                 }
             }
@@ -95,72 +82,51 @@ public class CassandraHelper {
         return validators;
     }
 
-    public Map<ByteBuffer, AbstractType> getValidatorsMap()
-    {
-        try
-        {
+    public Map<ByteBuffer, AbstractType> getValidatorsMap() {
+        try {
             if (this.validatorsMap == null)
                 this.validatorsMap = this.makeValidatorMap(this.getCfDef());
             return this.validatorsMap;
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private AbstractType getDefaultValidatorType()
-    {
-        if (this.defaultValidatorType == null)
-        {
-            try
-            {
+    private AbstractType getDefaultValidatorType() {
+        if (this.defaultValidatorType == null) {
+            try {
                 this.defaultValidatorType = TypeParser.parse(this.getCfDef().getDefault_validation_class());
-            }
-            catch (ConfigurationException e)
-            {
+            } catch (ConfigurationException e) {
                 throw new RuntimeException(e);
             }
         }
         return this.defaultValidatorType;
     }
 
-    public AbstractType getTypeForColumn(IColumn column)
-    {
+    public AbstractType getTypeForColumn(IColumn column) {
         AbstractType type = this.getValidatorsMap().get(column.name());
         if (type == null)
             type = this.getDefaultValidatorType();
         return type;
     }
 
-    public CfDef getCfDef()
-    {
-        if (this.cfDef == null)
-        {
-            try
-            {
+    public CfDef getCfDef() {
+        if (this.cfDef == null) {
+            try {
                 Cassandra.Client client = this.cassandraClient();
                 client.set_keyspace(this.keyspace);
                 KsDef ksDef = client.describe_keyspace(this.keyspace);
-                for (CfDef def : ksDef.getCf_defs())
-                {
-                    if (this.columnFamily.equals(def.getName()))
-                    {
+                for (CfDef def : ksDef.getCf_defs()) {
+                    if (this.columnFamily.equals(def.getName())) {
                         this.cfDef = def;
                         break;
                     }
                 }
-            }
-            catch (TException e)
-            {
+            } catch (TException e) {
                 throw new RuntimeException(e);
-            }
-            catch (InvalidRequestException e)
-            {
+            } catch (InvalidRequestException e) {
                 throw new RuntimeException(e);
-            }
-            catch (NotFoundException e)
-            {
+            } catch (NotFoundException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -171,22 +137,31 @@ public class CassandraHelper {
         if (obj == null) {
             return null;
         } else if (obj instanceof BigInteger) {
+            LOG.info("Serializing {} as BigInteger.", obj);
             return bigIntegerToByteBuffer((BigInteger) obj);
         } else if (obj instanceof Boolean) {
+            LOG.info("Serializing {} as Boolean.", obj);
             return booleanToByteBuffer((Boolean) obj);
         } else if (obj instanceof Date) {
+            LOG.info("Serializing {} as Date.", obj);
             return dateToByteBuffer((Date) obj);
         } else if (obj instanceof Double) {
-            return doubleToByteBuffer((Long) obj);
+            LOG.info("Serializing {} as Double.", obj);
+            return doubleToByteBuffer((Double) obj);
         } else if (obj instanceof Float) {
+            LOG.info("Serializing {} as Float.", obj);
             return floatToByteBuffer((Float) obj);
         } else if (obj instanceof Integer) {
+            LOG.info("Serializing {} as Integer.", obj);
             return intToByteBuffer((Integer) obj);
         } else if (obj instanceof Long) {
+            LOG.info("Serializing {} as Long.", obj);
             return longToByteBuffer((Long) obj);
         } else if (obj instanceof Short) {
+            LOG.info("Serializing {} as Short.", obj);
             return shortToByteBuffer((Short) obj);
         } else if (obj instanceof String) {
+            LOG.info("Serializing {} as String.", obj);
             return stringToByteBuffer((String) obj);
         }
         return null;
@@ -212,8 +187,8 @@ public class CassandraHelper {
         return ByteBuffer.allocate(8).putLong(0, obj);
     }
 
-    public static ByteBuffer doubleToByteBuffer(Long obj) {
-        return longToByteBuffer(Double.doubleToRawLongBits(obj));
+    public static ByteBuffer doubleToByteBuffer(Double obj) {
+        return ByteBuffer.allocate(8).putDouble(0, obj);
     }
 
     public static ByteBuffer floatToByteBuffer(Float obj) {
@@ -221,10 +196,7 @@ public class CassandraHelper {
     }
 
     public static ByteBuffer intToByteBuffer(Integer obj) {
-        ByteBuffer b = ByteBuffer.allocate(4);
-        b.putInt(obj);
-        b.rewind();
-        return b;
+        return ByteBuffer.allocate(4).putInt(0, obj);
     }
 
     public static ByteBuffer shortToByteBuffer(Short obj) {
