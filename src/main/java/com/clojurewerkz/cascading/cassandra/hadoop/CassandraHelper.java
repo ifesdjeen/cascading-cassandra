@@ -1,28 +1,29 @@
 package com.clojurewerkz.cascading.cassandra.hadoop;
 
 import org.apache.cassandra.config.ConfigurationException;
+
 import org.apache.cassandra.db.IColumn;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.TypeParser;
-import org.apache.cassandra.hadoop.ConfigHelper;
+
 import org.apache.cassandra.thrift.*;
-import org.apache.cassandra.utils.ByteBufferUtil;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.OutputCollector;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigInteger;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.Date;
 
 public class CassandraHelper {
 
@@ -165,4 +166,76 @@ public class CassandraHelper {
         }
         return this.cfDef;
     }
+
+    public static ByteBuffer serialize(Object obj) {
+        if (obj == null) {
+            return null;
+        } else if (obj instanceof BigInteger) {
+            return bigIntegerToByteBuffer((BigInteger) obj);
+        } else if (obj instanceof Boolean) {
+            return booleanToByteBuffer((Boolean) obj);
+        } else if (obj instanceof Date) {
+            return dateToByteBuffer((Date) obj);
+        } else if (obj instanceof Double) {
+            return doubleToByteBuffer((Long) obj);
+        } else if (obj instanceof Float) {
+            return floatToByteBuffer((Float) obj);
+        } else if (obj instanceof Integer) {
+            return intToByteBuffer((Integer) obj);
+        } else if (obj instanceof Long) {
+            return longToByteBuffer((Long) obj);
+        } else if (obj instanceof Short) {
+            return shortToByteBuffer((Short) obj);
+        } else if (obj instanceof String) {
+            return stringToByteBuffer((String) obj);
+        }
+        return null;
+    }
+
+    public static ByteBuffer bigIntegerToByteBuffer(BigInteger obj) {
+        return ByteBuffer.wrap(obj.toByteArray());
+    }
+
+    public static ByteBuffer booleanToByteBuffer(Boolean obj) {
+        boolean bool = obj;
+        byte[] b = new byte[1];
+        b[0] = bool ? (byte) 1 : (byte) 0;
+
+        return ByteBuffer.wrap(b);
+    }
+
+    public static ByteBuffer dateToByteBuffer(Date obj) {
+        return longToByteBuffer(obj.getTime());
+    }
+
+    public static ByteBuffer longToByteBuffer(Long obj) {
+        return ByteBuffer.allocate(8).putLong(0, obj);
+    }
+
+    public static ByteBuffer doubleToByteBuffer(Long obj) {
+        return longToByteBuffer(Double.doubleToRawLongBits(obj));
+    }
+
+    public static ByteBuffer floatToByteBuffer(Float obj) {
+        return intToByteBuffer(Float.floatToRawIntBits(obj));
+    }
+
+    public static ByteBuffer intToByteBuffer(Integer obj) {
+        ByteBuffer b = ByteBuffer.allocate(4);
+        b.putInt(obj);
+        b.rewind();
+        return b;
+    }
+
+    public static ByteBuffer shortToByteBuffer(Short obj) {
+        ByteBuffer b = ByteBuffer.allocate(2);
+        b.putShort(obj);
+        b.rewind();
+        return b;
+    }
+
+    public static ByteBuffer stringToByteBuffer(String obj) {
+        return ByteBuffer.wrap(obj.getBytes());
+    }
+
 }
