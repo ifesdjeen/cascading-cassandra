@@ -1,4 +1,4 @@
-(defproject com.clojurewerkz/cascading-cassandra "0.0.1-SNAPSHOT"
+(defproject com.clojurewerkz/cascading-cassandra "0.0.2-SNAPSHOT"
   :description ""
   :min-lein-version "2.0.0"
   :license {:name "Apache License 2.0"}
@@ -25,7 +25,6 @@
   :test-selectors {:all     (constantly true)
                    :focus   :focus
                    :default (constantly true)}
-  :aot [com.clojurewerkz.cascading.cassandra.tap com.clojurewerkz.cascading.cassandra.core]
   :javac-options     ["-target" "1.7" "-source" "1.7"]
   :repositories {"conjars" "http://conjars.org/repo/"
                  "sonatype" {:url "http://oss.sonatype.org/content/repositories/releases"
