@@ -138,6 +138,12 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
 
     }
 
+    /**
+     *
+     * @param flowProcess
+     * @param sinkCall
+     * @throws IOException
+     */
     @Override
     public void sink(FlowProcess<JobConf> flowProcess,
                      SinkCall<Object[], OutputCollector> sinkCall) throws IOException {
@@ -159,14 +165,13 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
             try {
               tupleEntryValue = tupleEntry.get(columnFieldMapping);
             } catch(FieldsResolverException e) {
-                logger.info("Couldn't resolve field: {}", columnFieldName);
+                logger.error("Couldn't resolve field: {}", columnFieldName);
             }
 
-            if(tupleEntryValue != null) {
-
-                logger.info("Column filed name {}", columnFieldName);
-                logger.info("Mapped column name {}", columnFieldMapping);
-                logger.info("Column filed value {}", tupleEntry.get(columnFieldMapping));
+            if(tupleEntryValue != null && columnFieldName != keyColumnName) {
+                logger.debug("Column filed name {}", columnFieldName);
+                logger.debug("Mapped column name {}", columnFieldMapping);
+                logger.debug("Column filed value {}", tupleEntry.get(columnFieldMapping));
 
                 Mutation mutation = createColumnPutMutation(CassandraHelper.serialize(columnFieldName),
                                                             CassandraHelper.serialize(tupleEntry.get(columnFieldMapping )));
@@ -177,6 +182,12 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
         outputCollector.collect(keyBuffer, mutations);
     }
 
+    /**
+     *
+     * @param name
+     * @param value
+     * @return
+     */
     protected Mutation createColumnPutMutation(ByteBuffer name, ByteBuffer value) {
         Column column = new Column(name);
         column.setName(name);
