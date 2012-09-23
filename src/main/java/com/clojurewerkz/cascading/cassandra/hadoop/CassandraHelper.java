@@ -137,33 +137,36 @@ public class CassandraHelper {
         if (obj == null) {
             return null;
         } else if (obj instanceof BigInteger) {
-            LOG.info("Serializing {} as BigInteger.", obj);
+            LOG.debug("Serializing {} as BigInteger.", obj);
             return bigIntegerToByteBuffer((BigInteger) obj);
         } else if (obj instanceof Boolean) {
-            LOG.info("Serializing {} as Boolean.", obj);
+            LOG.debug("Serializing {} as Boolean.", obj);
             return booleanToByteBuffer((Boolean) obj);
         } else if (obj instanceof Date) {
-            LOG.info("Serializing {} as Date.", obj);
+            LOG.debug("Serializing {} as Date.", obj);
             return dateToByteBuffer((Date) obj);
         } else if (obj instanceof Double) {
-            LOG.info("Serializing {} as Double.", obj);
+            LOG.debug("Serializing {} as Double.", obj);
             return doubleToByteBuffer((Double) obj);
         } else if (obj instanceof Float) {
-            LOG.info("Serializing {} as Float.", obj);
+            LOG.debug("Serializing {} as Float.", obj);
             return floatToByteBuffer((Float) obj);
         } else if (obj instanceof Integer) {
-            LOG.info("Serializing {} as Integer.", obj);
+            LOG.debug("Serializing {} as Integer.", obj);
             return intToByteBuffer((Integer) obj);
         } else if (obj instanceof Long) {
-            LOG.info("Serializing {} as Long.", obj);
+            LOG.debug("Serializing {} as Long.", obj);
             return longToByteBuffer((Long) obj);
         } else if (obj instanceof Short) {
-            LOG.info("Serializing {} as Short.", obj);
+            LOG.debug("Serializing {} as Short.", obj);
             return shortToByteBuffer((Short) obj);
         } else if (obj instanceof String) {
-            LOG.info("Serializing {} as String.", obj);
+            LOG.debug("Serializing {} as String.", obj);
             return stringToByteBuffer((String) obj);
         }
+
+        LOG.error("Could not serialize {}. Java reports type: {}", obj, obj.getClass().toString());
+
         return null;
     }
 
