@@ -17,6 +17,7 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -148,7 +149,11 @@ public class CassandraHelper {
         } else if (obj instanceof Double) {
             LOG.debug("Serializing {} as Double.", obj);
             return doubleToByteBuffer((Double) obj);
-        } else if (obj instanceof Float) {
+        } else if (obj instanceof BigDecimal) {
+            LOG.debug("Serializing {} as Double, casted from BigDecimal.", obj);
+            return doubleToByteBuffer(((BigDecimal) obj).doubleValue());
+        }
+        else if (obj instanceof Float) {
             LOG.debug("Serializing {} as Float.", obj);
             return floatToByteBuffer((Float) obj);
         } else if (obj instanceof Integer) {

@@ -150,8 +150,8 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
         TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
         OutputCollector outputCollector = sinkCall.getOutput();
 
-        logger.info("key name {}", this.keyColumnName);
-        logger.info("key mapping name {}", this.fieldMappings.get(this.keyColumnName));
+        logger.debug("key name {}", this.keyColumnName);
+        logger.debug("key mapping name {}", this.fieldMappings.get(this.keyColumnName));
         Tuple key = tupleEntry.selectTuple(new Fields(this.fieldMappings.get(this.keyColumnName)));
         ByteBuffer keyBuffer = CassandraHelper.serialize(key.get(0));
 
