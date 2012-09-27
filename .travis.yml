@@ -3,8 +3,12 @@ install: lein2 deps
 script: lein2 javac, test
 notifications:
   recipients:
-    - michaelklishin@me.com
+    - oleksandr.petrov@gmail.com
+before_script:
+  - cassandra-cli -f ./bin/ci/before_build.cql
 jdk:
   - openjdk6
   - openjdk7
   - oraclejdk7
+services:
+  - cassandra
