@@ -62,6 +62,25 @@ you can use following code:
     tap))
 ```
 
+# Dependency
+
+Jar is hosted on Clojars: https://clojars.org/com.clojurewerkz/cascading-cassandra
+
+## Leiningen
+
+```clojure
+[com.clojurewerkz/cascading-cassandra "0.0.3"]
+```
+
+## Maven
+
+```xml
+<dependency>
+  <groupId>com.clojurewerkz</groupId>
+  <artifactId>cascading-cassandra</artifactId>
+  <version>0.0.3</version>
+</dependency>
+```
 # License
 
 Copyright (C) 2011-2012 Alex Petrov
