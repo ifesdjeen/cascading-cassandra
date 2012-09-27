@@ -31,9 +31,4 @@
                  "sonatype-snapshots" {:url "http://oss.sonatype.org/content/repositories/snapshots"
                                        :snapshots true
                                        :releases {:checksum :fail :update :always}}}
-  :jvm-opts           ["-server"
-                       "-Xss2m"
-                       "-Xms768m"
-                       "-Xmx768m"
-                       "-XX:PermSize=768m"
-                       "-XX:MaxPermSize=768m"])
+  :jvm-opts ["-Xmx768m" "-server" "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n"])
