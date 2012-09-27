@@ -1,4 +1,4 @@
-(defproject com.clojurewerkz/cascading-cassandra "0.0.3"
+(defproject com.clojurewerkz/cascading-cassandra "0.0.4-SNAPSHOT"
   :description ""
   :min-lein-version "2.0.0"
   :license {:name "Apache License 2.0"}
