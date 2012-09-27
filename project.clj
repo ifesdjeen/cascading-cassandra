@@ -25,7 +25,6 @@
   :test-selectors {:all     (constantly true)
                    :focus   :focus
                    :default (constantly true)}
-  :javac-options     ["-target" "1.7" "-source" "1.7"]
   :repositories {"conjars" "http://conjars.org/repo/"
                  "sonatype" {:url "http://oss.sonatype.org/content/repositories/releases"
                              :snapshots false
