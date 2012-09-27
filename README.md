@@ -33,7 +33,7 @@ CassandraScheme scheme = new CassandraScheme("127.0.0.1"
                                              "9160"
                                              "keyspace-name"
                                              "column-family-name"
-                                             "key-column-name
+                                             "key-column-name"
                                              columns
                                              mappings);
 
