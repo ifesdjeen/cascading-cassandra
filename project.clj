@@ -32,8 +32,8 @@
                                        :snapshots true
                                        :releases {:checksum :fail :update :always}}}
   :jvm-opts           ["-server"
-                       "-Xss1m"
-                       "-Xms128m"
-                       "-Xmx128m"
-                       "-XX:PermSize=128m"
-                       "-XX:MaxPermSize=128m"])
+                       "-Xss2m"
+                       "-Xms512m"
+                       "-Xmx512m"
+                       "-XX:PermSize=512m"
+                       "-XX:MaxPermSize=512m"])
