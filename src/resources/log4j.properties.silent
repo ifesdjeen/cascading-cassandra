@@ -1,0 +1,3 @@
+log4j.rootLogger=INFO,console
+log4j.logger.user=INFO
+log4j.appender.console=org.apache.log4j.varia.NullAppender

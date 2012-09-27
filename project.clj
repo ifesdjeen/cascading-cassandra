@@ -14,7 +14,6 @@
   :main com.clojurewerkz.cascading.cassandra.core
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
-
   :profiles {:dev {:resource-paths     ["src/resources"]
                    :dependencies [[org.clojure/clojure "1.4.0"]
                                   [clojurewerkz/cassaforte "1.0.0-SNAPSHOT"]
@@ -31,4 +30,6 @@
                              :releases {:checksum :fail :update :always}}
                  "sonatype-snapshots" {:url "http://oss.sonatype.org/content/repositories/snapshots"
                                        :snapshots true
-                                       :releases {:checksum :fail :update :always}}})
+                                       :releases {:checksum :fail :update :always}}}
+  :jvm-opts           ["-server"
+                       "-Xmx512m"])
