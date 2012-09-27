@@ -13,10 +13,13 @@ To use it as both source and sink, simply create a Schema:
 import com.clojurewerkz.cascading.cassandra.CassandraTap;
 import com.clojurewerkz.cascading.cassandra.CassandraScheme;
 
+import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap
 
 // List of columns to be fetched from Cassandra
-ArrayList<String> columns = new ArrayList<String>();
+List<String> columns = new ArrayList<String>();
 columns.add("first-column-name");
 columns.add("second-column-name");
 columns.add("third-column-name");
@@ -24,7 +27,7 @@ columns.add("third-column-name");
 // When writing back to cassandra, you may have Cascading output tuple item names
 // a bit different from your Cassandra ColumnFamily definition. Otherwise, you can
 // simply specify both key and value same.
-HashMap<String, String> mappings = new HashMap<String, String>();
+Map<String, String> mappings = new HashMap<String, String>();
 mappings.put("first-column-name", "cascading-output-tuple-first-item-name");
 mappings.put("second-column-name", "cascading-output-tuple-second-item-name");
 mappings.put("third-column-name", "cascading-output-tuple-third-item-name");
@@ -54,10 +57,10 @@ you can use following code:
                                         keyspace
                                         column-family
                                         "key-column-name"
-                                        (java.util.ArrayList. ["first-column-name" "second-column-name" "third-column-name"])
-                                        (java.util.HashMap. {"first-column-name" "cascading-output-tuple-first-item-name"
-                                                             "second-column-name" "cascading-output-tuple-second-item-name"
-                                                             "third-column-name" "cascading-output-tuple-third-item-name"}))
+                                        ["first-column-name" "second-column-name" "third-column-name"]
+                                        {"first-column-name" "cascading-output-tuple-first-item-name"
+                                         "second-column-name" "cascading-output-tuple-second-item-name"
+                                         "third-column-name" "cascading-output-tuple-third-item-name"})
         tap           (CassandraTap. scheme)]
     tap))
 ```
