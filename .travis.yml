@@ -1,4 +1,4 @@
-language: java
+language: clojure
 install: lein2 deps
 script: lein2 javac && lein2 test
 notifications:
