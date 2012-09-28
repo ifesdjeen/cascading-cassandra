@@ -212,7 +212,9 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
 
         ConfigHelper.setOutputRpcPort(conf, port);
         ConfigHelper.setOutputInitialAddress(conf, host);
-        ConfigHelper.setOutputPartitioner(conf, "org.apache.cassandra.dht.ByteOrderedPartitioner");
+        // ConfigHelper.setOutputPartitioner(conf, "org.apache.cassandra.dht.ByteOrderedPartitioner");
+        ConfigHelper.setOutputPartitioner(conf, "org.apache.cassandra.dht.RandomPartitioner");
+
         ConfigHelper.setOutputColumnFamily(conf, keyspace, columnFamily);
         conf.setInt(ColumnFamilyInputFormat.CASSANDRA_HADOOP_MAX_KEY_SIZE, 60);
 
@@ -230,7 +232,10 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
         ConfigHelper.setInputSplitSize(conf, 30);
         ConfigHelper.setInputRpcPort(conf, port);
         ConfigHelper.setInputInitialAddress(conf, host);
-        ConfigHelper.setInputPartitioner(conf, "org.apache.cassandra.dht.ByteOrderedPartitioner");
+
+        // ConfigHelper.setInputPartitioner(conf, "org.apache.cassandra.dht.ByteOrderedPartitioner");
+        ConfigHelper.setInputPartitioner(conf, "org.apache.cassandra.dht.RandomPartitioner");
+
         ConfigHelper.setInputColumnFamily(conf, keyspace, columnFamily);
         conf.setInt(ColumnFamilyInputFormat.CASSANDRA_HADOOP_MAX_KEY_SIZE, 60);
 
