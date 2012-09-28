@@ -1,4 +1,5 @@
 # Cascading Tap for Cassandra
+[![Build Status](https://secure.travis-ci.org/ifesdjeen/cascading-cassandra.png)](http://travis-ci.org/ifesdjeen/cascading-cassandra)
 
 This is a Cassandra Tap that can be used as a sink and source. Works
 with the latest version of Cassandra and Cascading (2.0), is tested,
