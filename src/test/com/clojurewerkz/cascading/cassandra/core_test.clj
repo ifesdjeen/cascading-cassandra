@@ -40,10 +40,10 @@
                                         keyspace
                                         column-family
                                         "name"
-                                        (java.util.ArrayList. ["name" "language" "votes"])
-                                        (java.util.HashMap. {"name" "?value1"
-                                                             "language" "?value2"
-                                                             "votes" "?value3"}))
+                                        ["name" "language" "votes"]
+                                        {"name"     "?value1"
+                                         "language" "?value2"
+                                         "votes"    "?value3"})
         tap           (CassandraTap. scheme)]
     tap))
 

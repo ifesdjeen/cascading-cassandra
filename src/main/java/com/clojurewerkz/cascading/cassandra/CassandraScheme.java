@@ -58,7 +58,7 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
 
     // Use this constructor when using CassandraScheme as a Sink
     public CassandraScheme(String host, String port, String keyspace, String columnFamily, String keyColumnName,
-                           List<String> columnFieldNames, HashMap<String, String> fieldMappings) {
+                           List<String> columnFieldNames, Map<String, String> fieldMappings) {
         this.host = host;
         this.port = port;
         this.keyspace = keyspace;
