@@ -87,7 +87,7 @@ Jar is hosted on Clojars: https://clojars.org/com.clojurewerkz/cascading-cassand
 ```
 # License
 
-Copyright (C) 2011-2012 Alex Petrov
+Copyright (C) 2011-2012 Alex Petrov and contributors
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -108,6 +108,10 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+# Contributors 
+
+[Maximilian Karasz (@mknoszlig)](http://twitter.com/mknoszlig)
+
 # Credits
 
-Alex Petrov: alexp at coffeenco dot de
+[Alex Petrov](https://twitter.com/ifesdjeen): alexp at coffeenco dot de
