@@ -16,7 +16,7 @@
   :test-paths        ["src/test"]
   :profiles {:dev {:resource-paths     ["src/resources"]
                    :dependencies [[org.clojure/clojure "1.4.0"]
-                                  [clojurewerkz/cassaforte "1.0.0-SNAPSHOT"]
+                                  [clojurewerkz/cassaforte "1.0.0-beta11-SNAPSHOT"]
                                   [cascalog "1.10.0"]
                                   [midje "1.3.0" :exclude [org.clojure/clojure]]
                                   [midje-cascalog "0.4.0" :exclude [org.clojure/clojure]]]}
@@ -31,4 +31,5 @@
                  "sonatype-snapshots" {:url "http://oss.sonatype.org/content/repositories/snapshots"
                                        :snapshots true
                                        :releases {:checksum :fail :update :always}}}
-  :jvm-opts ["-Xmx768m" "-server" "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n"])
+  :jvm-opts ["-Xmx768m" "-server" "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n"]
+  :pedantic :warn)

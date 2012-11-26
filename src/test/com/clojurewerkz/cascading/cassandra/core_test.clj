@@ -19,7 +19,8 @@
    (catch org.apache.cassandra.thrift.InvalidRequestException ire#
      (println (.getWhy ire#)))))
 
-(cc/connect! "127.0.0.1" "CascadingCassandra")
+(cc/connect! "127.0.0.1")
+(sch/set-keyspace "CascadingCassandra")
 
 (defn create-test-column-family
   []
