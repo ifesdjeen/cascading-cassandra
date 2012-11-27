@@ -33,59 +33,81 @@
                             :primary-key :name))
 
 (defn create-tap
-  []
-  (let [keyspace      "CascadingCassandra"
-        column-family "libraries"
-        scheme        (CassandraScheme. "127.0.0.1"
-                                        "9160"
-                                        keyspace
-                                        column-family
-                                        "name"
-                                        ["name" "language" "votes"]
-                                        {"name"     "?value1"
-                                         "language" "?value2"
-                                         "votes"    "?value3"})
-        tap           (CassandraTap. scheme)]
-    tap))
+  ([]
+     (create-tap ["name" "language" "votes"] {"name"     "?value1"
+                                              "language" "?value2"
+                                              "votes"    "?value3"}))
+  ([columns mappings]
+      (let [keyspace      "CascadingCassandra"
+            column-family "libraries"
+            scheme        (CassandraScheme. "127.0.0.1"
+                                            "9160"
+                                            keyspace
+                                            column-family
+                                            "name"
+                                            columns
+                                            mappings
+                                            {"cassandra.inputPartitioner" "org.apache.cassandra.dht.RandomPartitioner"
+                                             "cassandra.outputPartitioner" "org.apache.cassandra.dht.RandomPartitioner"})
+            tap           (CassandraTap. scheme)]
+        tap)))
 
-(deftest t-cassandra-tap-as-source
-  (create-test-column-family)
-  (dotimes [counter 100]
-    (cql/insert "libraries" {:name (str "Cassaforte" counter) :language (str "Clojure" counter) :votes counter}))
+(comment
+  (deftest t-cassandra-tap-as-source
+    (create-test-column-family)
+    (dotimes [counter 100]
+      (cql/insert "libraries" {:name (str "Cassaforte" counter) :language (str "Clojure" counter) :votes counter}))
 
-  (fact "Handles simple calculations"
-        (<-
-         [?count ?sum]
-         ((create-tap) ?value1 ?value2 ?value3)
-         (c/count ?count)
-         (c/sum ?value3 :> ?sum))
-        => (produces [[100 4950]])))
+    (fact "Handles simple calculations"
+          (<-
+           [?count ?sum]
+           ((create-tap) ?value1 ?value2 ?value3)
+           (c/count ?count)
+           (c/sum ?value3 :> ?sum))
+          => (produces [[100 4950]])))
 
-(deftest t-cassandra-tap-as-source-2
-  (create-test-column-family)
+  (deftest t-cassandra-tap-as-source-2
+    (create-test-column-family)
 
-  (cql/insert "libraries" {:name "Riak" :language "Erlang" :votes 5})
-  (cql/insert "libraries" {:name "Cassaforte" :language "Clojure" :votes 3})
+    (cql/insert "libraries" {:name "Riak" :language "Erlang" :votes 5})
+    (cql/insert "libraries" {:name "Cassaforte" :language "Clojure" :votes 3})
 
-  (fact "Retrieves data"
-        (<-
-         [?value1 ?value3]
-         ((create-tap) ?value1 ?value2 ?value3))
-        => (produces [["Cassaforte" 3] ["Riak" 5]])))
+    (fact "Retrieves data"
+          (<-
+           [?value1 ?value3]
+           ((create-tap) ?value1 ?value2 ?value3))
+          => (produces [["Cassaforte" 3] ["Riak" 5]])))
 
-(deftest t-cassandra-tap-as-sink
-  (create-test-column-family)
+  (deftest t-cassandra-tap-as-sink
+    (create-test-column-family)
 
-  (let [test-data [["Riak" "Erlang" 5]
-                   ["Cassaforte" "Clojure" 3]]]
+    (let [test-data [["Riak" "Erlang" 5]
+                     ["Cassaforte" "Clojure" 3]]]
 
-    (?<- (create-tap)
-         [?value1 ?value2 ?value3]
-         (test-data ?value1 ?value2 ?value3))
-    (Thread/sleep 5000)
+      (?<- (create-tap)
+           [?value1 ?value2 ?value3]
+           (test-data ?value1 ?value2 ?value3))
 
-    (let [res (cconv/to-plain-hash (:rows (cql/execute "SELECT * FROM libraries")))]
-      (is (= {:name "Cassaforte" :language "Clojure" :votes 3}
-             (get res "Cassaforte")))
-      (is (= {:name "Riak" :language "Erlang" :votes 5}{:name "Riak" :language "Erlang" :votes 5}
-             (get res "Riak"))))))
+      (let [res (cconv/to-plain-hash (:rows (cql/execute "SELECT * FROM libraries")))]
+        (is (= {:name "Cassaforte" :language "Clojure" :votes 3}
+               (get res "Cassaforte")))
+        (is (= {:name "Riak" :language "Erlang" :votes 5}{:name "Riak" :language "Erlang" :votes 5}
+               (get res "Riak")))))))
+
+
+
+(comment
+  (deftest t-cassandra-tap-as-source-3
+    (create-test-column-family)
+
+    (println 1)
+    (cql/insert "libraries" {:name "Riak" :language "Erlang" :votes 5})
+    (cql/insert "libraries" {:name "Cassaforte" :language "Clojure" :votes 3})
+    (println 2)
+    (fact "Retrieves data"
+          (<-
+           [?value1 ?value3]
+           ((create-tap [] {"name"     "?value1"
+                            "language" "?value2"
+                            "votes"    "?value3"}) ?value1  ?value3))
+          => (produces [["Cassaforte" 3] ["Riak" 5]]))))
