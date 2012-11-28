@@ -3,13 +3,8 @@
   :min-lein-version "2.0.0"
   :license {:name "Apache License 2.0"}
 
-  :dependencies [[cascading/cascading-hadoop "2.0.0"
-                    :exclusions [org.codehaus.janino/janino
-                                 org.apache.hadoop/hadoop-core]]
-                 [org.apache.cassandra/cassandra-all "1.1.5"]
-                 [org.apache.hadoop/hadoop-core "0.20.205.0"]
-                 ;; [org.apache.hadoop/hadoop-core "0.20.2-dev"]
-                 ]
+  :dependencies [[org.apache.cassandra/cassandra-all "1.1.5"]
+                 [org.apache.hadoop/hadoop-core "0.20.205.0"]]
 
   :main com.clojurewerkz.cascading.cassandra.core
   :java-source-paths ["src/main/java"]
