@@ -1,4 +1,4 @@
-package com.clojurewerkz.cascading.cassandra.hadoop;
+package com.ifesdjeen.cascading.cassandra.hadoop;
 
 import org.apache.cassandra.config.ConfigurationException;
 

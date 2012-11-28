@@ -1,4 +1,4 @@
-(ns com.clojurewerkz.cascading.cassandra.core-test
+(ns com.ifesdjeen.cascading.cassandra.core-test
   (:require [clojurewerkz.cassaforte.client :as cc]
             [clojurewerkz.cassaforte.schema :as sch]
             [clojurewerkz.cassaforte.conversion :as cconv]
@@ -11,7 +11,7 @@
             [cascalog.ops :as c])
   (:import [cascading.tuple Fields]
            [cascading.scheme Scheme]
-           [com.clojurewerkz.cascading.cassandra CassandraTap CassandraScheme]
+           [com.ifesdjeen.cascading.cassandra CassandraTap CassandraScheme]
            [org.apache.cassandra.utils ByteBufferUtil]
            [org.apache.cassandra.thrift Column]))
 

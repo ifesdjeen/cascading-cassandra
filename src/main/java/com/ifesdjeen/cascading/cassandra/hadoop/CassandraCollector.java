@@ -1,4 +1,4 @@
-package com.clojurewerkz.cascading.cassandra.hadoop;
+package com.ifesdjeen.cascading.cassandra.hadoop;
 
 import cascading.flow.FlowProcess;
 import cascading.flow.hadoop.HadoopFlowProcess;

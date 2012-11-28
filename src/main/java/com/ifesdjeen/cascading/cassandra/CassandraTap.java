@@ -1,4 +1,4 @@
-package com.clojurewerkz.cascading.cassandra;
+package com.ifesdjeen.cascading.cassandra;
 
 import cascading.tap.Tap;
 
@@ -13,7 +13,7 @@ import cascading.tap.hadoop.io.HadoopTupleEntrySchemeIterator;
 import cascading.tuple.TupleEntryIterator;
 import cascading.tuple.TupleEntryCollector;
 
-import com.clojurewerkz.cascading.cassandra.hadoop.CassandraCollector;
+import com.ifesdjeen.cascading.cassandra.hadoop.CassandraCollector;
 import java.io.IOException;
 
 public class CassandraTap extends Tap<JobConf, RecordReader, OutputCollector> {

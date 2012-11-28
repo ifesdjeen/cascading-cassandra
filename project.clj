@@ -1,11 +1,11 @@
-(defproject com.clojurewerkz/cascading-cassandra "0.0.4-SNAPSHOT"
+(defproject com.ifesdjeen/cascading-cassandra "0.0.4-SNAPSHOT"
   :description ""
   :min-lein-version "2.0.0"
   :license {:name "Apache License 2.0"}
 
   :dependencies [[org.apache.cassandra/cassandra-all "1.1.5"]]
 
-  :main com.clojurewerkz.cascading.cassandra.core
+  :main com.ifesdjeen.cascading.cassandra.core
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
   :profiles {:dev {:resource-paths     ["src/resources"]

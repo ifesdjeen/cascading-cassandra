@@ -1,4 +1,4 @@
-package com.clojurewerkz.cascading.cassandra;
+package com.ifesdjeen.cascading.cassandra;
 
 import cascading.tuple.FieldsResolverException;
 import org.apache.cassandra.db.ColumnSerializer;
@@ -21,8 +21,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat;
 import org.apache.cassandra.hadoop.ConfigHelper;
 
-import com.clojurewerkz.cascading.cassandra.hadoop.ColumnFamilyInputFormat;
-import com.clojurewerkz.cascading.cassandra.hadoop.CassandraHelper;
+import com.ifesdjeen.cascading.cassandra.hadoop.ColumnFamilyInputFormat;
+import com.ifesdjeen.cascading.cassandra.hadoop.CassandraHelper;
 
 import java.io.IOException;
 import java.util.List;
