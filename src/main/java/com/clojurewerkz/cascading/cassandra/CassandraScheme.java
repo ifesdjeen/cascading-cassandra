@@ -132,17 +132,21 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
 
     result.add(ByteBufferUtil.string(rowkey).trim());
 
-    for (String columnFieldName : columnFieldNames) {
-      IColumn col = columns.get(ByteBufferUtil.bytes(columnFieldName));
-      if (col != null) {
+    if (!columnFieldNames.isEmpty()) {
+      for (String columnFieldName : columnFieldNames) {
+        IColumn col = columns.get(ByteBufferUtil.bytes(columnFieldName));
 
-        result.add(this.helper.getTypeForColumn(col).compose(col.value()));
-      } else if (columnFieldName != this.keyColumnName) {
-        result.add("");
+        if (col != null) {
+          result.add(this.helper.getTypeForColumn(col).compose(col.value()));
+        } else if (columnFieldName != this.keyColumnName) {
+          result.add("");
+        }
       }
+    } else {
+      result.add(columns);
     }
 
-    System.out.println(result);
+
 
     sourceCall.getIncomingEntry().setTuple(result);
     return true;

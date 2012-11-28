@@ -2,7 +2,8 @@
   (:require [clojurewerkz.cassaforte.client :as cc]
             [clojurewerkz.cassaforte.schema :as sch]
             [clojurewerkz.cassaforte.conversion :as cconv]
-            [clojurewerkz.cassaforte.cql    :as cql])
+            [clojurewerkz.cassaforte.cql    :as cql]
+            [clojurewerkz.cassaforte.bytes  :as bytes])
   (:use cascalog.api
         clojure.test
         [midje sweet cascalog])
@@ -10,7 +11,8 @@
             [cascalog.ops :as c])
   (:import [cascading.tuple Fields]
            [cascading.scheme Scheme]
-           [com.clojurewerkz.cascading.cassandra CassandraTap CassandraScheme]))
+           [com.clojurewerkz.cascading.cassandra CassandraTap CassandraScheme]
+           [org.apache.cassandra.thrift Column]))
 
 (defmacro with-thrift-exception-handling
 [& forms]
@@ -53,6 +55,7 @@
         tap)))
 
 (comment
+
   (deftest t-cassandra-tap-as-source
     (create-test-column-family)
     (dotimes [counter 100]
@@ -96,18 +99,42 @@
 
 
 
-(comment
-  (deftest t-cassandra-tap-as-source-3
-    (create-test-column-family)
+(defmapop deserialize-values
+  [columns-hash]
+  (let [columns (.toArray (.entrySet columns-hash))]
+    (doseq [column columns]
+      (let [name (bytes/deserialize "AsciiType" (.array (.getKey column)))]
+        ;; (println "====" name "====")
+        (println  (.getValue column))
+        (println  (.value (.getValue column)))
+        (println  (.array (.value (.getValue column))))
+        (println  (bytes/deserialize "UTF8Type" (.array (.value (.getValue column)))))
+        (cond
+          (or
+           (= name "language")
+           (= name "name"))
+          ;; (bytes/deserialize "UTF8Type" (.array (.value (.getValue column))))
+          (println 111)
 
-    (println 1)
-    (cql/insert "libraries" {:name "Riak" :language "Erlang" :votes 5})
-    (cql/insert "libraries" {:name "Cassaforte" :language "Clojure" :votes 3})
-    (println 2)
-    (fact "Retrieves data"
-          (<-
-           [?value1 ?value3]
-           ((create-tap [] {"name"     "?value1"
-                            "language" "?value2"
-                            "votes"    "?value3"}) ?value1  ?value3))
-          => (produces [["Cassaforte" 3] ["Riak" 5]]))))
+          )
+        [name 2]))
+
+    )
+)
+
+(comment)
+(deftest t-cassandra-tap-as-source-3
+  (create-test-column-family)
+
+  (println 1)
+  (cql/insert "libraries" {:name "Riak" :language "Erlang" :votes 5})
+  (cql/insert "libraries" {:name "Cassaforte" :language "Clojure" :votes 3})
+  (println 2)
+  (fact "Retrieves data"
+        (<-
+         [?value1 ?value3]
+         (deserialize-values ?columns :> ?value1 ?value3)
+         ((create-tap [] {"name"     "?value1"
+                          "language" "?value2"
+                          "votes"    "?value3"}) ?name ?columns))
+        => (produces [["Cassaforte" 3] ["Riak" 5]])))
