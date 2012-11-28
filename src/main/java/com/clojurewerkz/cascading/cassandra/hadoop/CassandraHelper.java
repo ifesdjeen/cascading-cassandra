@@ -152,8 +152,7 @@ public class CassandraHelper {
         } else if (obj instanceof BigDecimal) {
             LOG.debug("Serializing {} as Double, casted from BigDecimal.", obj);
             return doubleToByteBuffer(((BigDecimal) obj).doubleValue());
-        }
-        else if (obj instanceof Float) {
+        } else if (obj instanceof Float) {
             LOG.debug("Serializing {} as Float.", obj);
             return floatToByteBuffer((Float) obj);
         } else if (obj instanceof Integer) {

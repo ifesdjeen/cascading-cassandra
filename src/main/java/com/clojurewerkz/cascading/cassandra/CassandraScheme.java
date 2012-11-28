@@ -1,6 +1,7 @@
 package com.clojurewerkz.cascading.cassandra;
 
 import cascading.tuple.FieldsResolverException;
+import org.apache.cassandra.db.ColumnSerializer;
 import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
@@ -145,8 +146,6 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     } else {
       result.add(columns);
     }
-
-
 
     sourceCall.getIncomingEntry().setTuple(result);
     return true;
