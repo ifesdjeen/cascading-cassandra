@@ -41,6 +41,7 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.Pair;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -126,8 +127,11 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
     }
 
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException {
+	this.initialize(split, context.getConfiguration());
+    }
+
+    public void initialize(InputSplit split, Configuration conf)  {
         this.split = (ColumnFamilySplit) split;
-        Configuration conf = context.getConfiguration();
         KeyRange jobRange = ConfigHelper.getInputKeyRange(conf);
         filter = jobRange == null ? null : jobRange.row_filter;
         predicate = ConfigHelper.getInputSlicePredicate(conf);

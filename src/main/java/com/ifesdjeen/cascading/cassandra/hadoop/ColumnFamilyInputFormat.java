@@ -48,6 +48,9 @@ import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
+
+import org.apache.hadoop.mapreduce.Job;
+
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
@@ -102,10 +105,12 @@ public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<B
     }
 
     public List<InputSplit> getSplits(JobContext context) throws IOException {
+
+	System.out.println("GETTING CONFIG");
         Configuration conf = context.getConfiguration();
-
+	System.out.println("VALIDATING CONFIG");
         validateConfiguration(conf);
-
+	System.out.println("FURTHER");
         // cannonical ranges and nodes holding replicas
         List<TokenRange> masterRangeNodes = getRangeMap(conf);
 
@@ -260,24 +265,83 @@ public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<B
     // Old Hadoop API
     //
     public org.apache.hadoop.mapred.InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
-        TaskAttemptContext tac = new TaskAttemptContext(jobConf, new TaskAttemptID());
-        List<org.apache.hadoop.mapreduce.InputSplit> newInputSplits = this.getSplits(tac);
+        Configuration conf = jobConf;
+
+        validateConfiguration(conf);
+
+        // cannonical ranges and nodes holding replicas
+        List<TokenRange> masterRangeNodes = getRangeMap(conf);
+
+        keyspace = ConfigHelper.getInputKeyspace(conf);
+        cfName = ConfigHelper.getInputColumnFamily(conf);
+        partitioner = ConfigHelper.getInputPartitioner(conf);
+        logger.debug("partitioner is " + partitioner);
+
+        // cannonical ranges, split into pieces, fetching the splits in parallel
+        ExecutorService executor = Executors.newCachedThreadPool();
+        List<InputSplit> splits = new ArrayList<InputSplit>();
+
+        try {
+            List<Future<List<InputSplit>>> splitfutures = new ArrayList<Future<List<InputSplit>>>();
+            KeyRange jobKeyRange = ConfigHelper.getInputKeyRange(conf);
+            Range<Token> jobRange = null;
+            if (jobKeyRange != null && jobKeyRange.start_token != null) {
+                assert partitioner.preservesOrder() : "ConfigHelper.setInputKeyRange(..) can only be used with a order preserving paritioner";
+                assert jobKeyRange.start_key == null : "only start_token supported";
+                assert jobKeyRange.end_key == null : "only end_token supported";
+                jobRange = new Range<Token>(partitioner.getTokenFactory().fromString(jobKeyRange.start_token),
+					    partitioner.getTokenFactory().fromString(jobKeyRange.end_token),
+					    partitioner);
+            }
+
+            for (TokenRange range : masterRangeNodes) {
+                if (jobRange == null) {
+                    // for each range, pick a live owner and ask it to compute bite-sized splits
+                    splitfutures.add(executor.submit(new SplitCallable(range, conf)));
+                } else {
+                    Range<Token> dhtRange = new Range<Token>(partitioner.getTokenFactory().fromString(range.start_token),
+							     partitioner.getTokenFactory().fromString(range.end_token),
+							     partitioner);
+
+                    if (dhtRange.intersects(jobRange)) {
+                        for (Range<Token> intersection : dhtRange.intersectionWith(jobRange)) {
+                            range.start_token = partitioner.getTokenFactory().toString(intersection.left);
+                            range.end_token = partitioner.getTokenFactory().toString(intersection.right);
+                            // for each range, pick a live owner and ask it to compute bite-sized splits
+                            splitfutures.add(executor.submit(new SplitCallable(range, conf)));
+                        }
+                    }
+                }
+            }
+
+            // wait until we have all the results back
+            for (Future<List<InputSplit>> futureInputSplits : splitfutures) {
+                try {
+                    splits.addAll(futureInputSplits.get());
+                } catch (Exception e) {
+                    throw new IOException("Could not get input splits", e);
+                }
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+
+        assert splits.size() > 0;
+
+        assert splits.size() > 0;
+        Collections.shuffle(splits, new Random(System.nanoTime()));
+
+        List<org.apache.hadoop.mapreduce.InputSplit> newInputSplits = splits;
         org.apache.hadoop.mapred.InputSplit[] oldInputSplits = new org.apache.hadoop.mapred.InputSplit[newInputSplits.size()];
         for (int i = 0; i < newInputSplits.size(); i++)
             oldInputSplits[i] = (ColumnFamilySplit) newInputSplits.get(i);
         return oldInputSplits;
+
     }
 
     public org.apache.hadoop.mapred.RecordReader<ByteBuffer, SortedMap<ByteBuffer, IColumn>> getRecordReader(org.apache.hadoop.mapred.InputSplit split, JobConf jobConf, final Reporter reporter) throws IOException {
-        TaskAttemptContext tac = new TaskAttemptContext(jobConf, TaskAttemptID.forName(jobConf.get(MAPRED_TASK_ID))) {
-            @Override
-            public void progress() {
-                reporter.progress();
-            }
-        };
-
         ColumnFamilyRecordReader recordReader = new ColumnFamilyRecordReader(jobConf.getInt(CASSANDRA_HADOOP_MAX_KEY_SIZE, CASSANDRA_HADOOP_MAX_KEY_SIZE_DEFAULT));
-        recordReader.initialize((org.apache.hadoop.mapreduce.InputSplit) split, tac);
+        recordReader.initialize((org.apache.hadoop.mapreduce.InputSplit) split, (Configuration) jobConf);
         return recordReader;
     }
 
