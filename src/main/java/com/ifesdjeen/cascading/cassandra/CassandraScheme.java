@@ -132,7 +132,7 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     SortedMap<ByteBuffer, IColumn> columns = (SortedMap<ByteBuffer, IColumn>) value;
 
     // result.add(ByteBufferUtil.string(rowkey).trim());
-    result.add(ByteBufferUtil.toInt(rowkey));
+    result.add(rowkey);
 
     if (!columnFieldNames.isEmpty()) {
       for (String columnFieldName : columnFieldNames) {
