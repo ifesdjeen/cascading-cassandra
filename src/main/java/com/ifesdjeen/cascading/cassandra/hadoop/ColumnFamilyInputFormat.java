@@ -332,6 +332,7 @@ public class ColumnFamilyInputFormat extends InputFormat<ByteBuffer, SortedMap<B
         Collections.shuffle(splits, new Random(System.nanoTime()));
 
         List<org.apache.hadoop.mapreduce.InputSplit> newInputSplits = splits;
+
         org.apache.hadoop.mapred.InputSplit[] oldInputSplits = new org.apache.hadoop.mapred.InputSplit[newInputSplits.size()];
         for (int i = 0; i < newInputSplits.size(); i++)
             oldInputSplits[i] = (ColumnFamilySplit) newInputSplits.get(i);
