@@ -164,8 +164,8 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
     OutputCollector outputCollector = sinkCall.getOutput();
 
-    logger.debug("key name {}", this.keyColumnName);
-    logger.debug("key mapping name {}", this.fieldMappings.get(this.keyColumnName));
+    logger.info("key name {}", this.keyColumnName);
+    logger.info("key mapping name {}", this.fieldMappings.get(this.keyColumnName));
     Tuple key = tupleEntry.selectTuple(new Fields(this.fieldMappings.get(this.keyColumnName)));
     ByteBuffer keyBuffer = CassandraHelper.serialize(key.get(0));
 
@@ -183,9 +183,9 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
       }
 
       if (tupleEntryValue != null && columnFieldName != keyColumnName) {
-        logger.debug("Column filed name {}", columnFieldName);
-        logger.debug("Mapped column name {}", columnFieldMapping);
-        logger.debug("Column filed value {}", tupleEntry.get(columnFieldMapping));
+        logger.info("Column filed name {}", columnFieldName);
+        logger.info("Mapped column name {}", columnFieldMapping);
+        logger.info("Column filed value {}", tupleEntry.get(columnFieldMapping));
 
         Mutation mutation = createColumnPutMutation(CassandraHelper.serialize(columnFieldName),
                 CassandraHelper.serialize(tupleEntry.get(columnFieldMapping)));

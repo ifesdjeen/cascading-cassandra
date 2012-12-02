@@ -12,3 +12,6 @@ jdk:
   - oraclejdk7
 services:
   - cassandra
+branches:
+  only:
+    - master
