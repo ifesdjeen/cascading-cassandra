@@ -3,7 +3,12 @@
             [clojurewerkz.cassaforte.schema :as sch]
             [clojurewerkz.cassaforte.conversion :as cconv]
             [clojurewerkz.cassaforte.cql    :as cql]
-            [clojurewerkz.cassaforte.bytes  :as bytes])
+            [clojurewerkz.cassaforte.bytes  :as bytes]
+
+            [clojurewerkz.cassaforte.thrift.core :as thrift]
+            [clojurewerkz.cassaforte.thrift.column-definition :as cd]
+            [clojurewerkz.cassaforte.thrift.column-family-definition :as cfd]
+            )
   (:use cascalog.api
         clojure.test
         [midje sweet cascalog])
@@ -138,3 +143,37 @@
          (deserialize-values ?columns :> ?language ?votes)
          ((create-tap [] {}) ?name ?columns))
         => (produces [["Cassaforte" "Clojure" 3] ["Riak" "Erlang" 5]])))
+
+
+
+(defmapop deserialize-wide-rows
+  [super-columns]
+  (into []
+        (for [super-column (.values super-columns)]
+          (into []
+                (for [column (.getSubColumns super-column)]
+                  (let [name (ByteBufferUtil/string (.name column))
+                        raw-value (.value column)]
+                    (ByteBufferUtil/string raw-value)))))))
+
+(deftest t-cassandra-tap-as-source-4-wide-rows
+  (with-thrift-exception-handling
+    (sch/drop-keyspace "CascadingCassandra"))
+  (sch/add-keyspace "CascadingCassandra"
+                    "org.apache.cassandra.locator.SimpleStrategy"
+                    [(cfd/build-cfd "CascadingCassandra" "libraries" [] :column-type "Super")]
+                    :strategy-opts {"replication_factor" "1"})
+
+  (thrift/batch-mutate
+   {"key1" {"libraries" {:name1 {:first "a" :second "b"} :name2 {:first "c" :second "d"} :name3 {:first "e" :second "f"}}}
+    "key2" {"libraries" {:name1 {:first "g" :second "h"} :name2 {:first "i" :second "j"} :name3 {:first "k" :second "l"}} }}
+   (cconv/to-consistency-level :one)
+   :type :super)
+
+  (fact "Retrieves data"
+        (<-
+         [?name1 ?name2 ?name3]
+         (deserialize-wide-rows ?super-columns :> ?name1 ?name2 ?name3)
+         ((create-tap [] {}) ?name ?super-columns))
+        => (produces [[["a" "b"] ["c" "d"] ["e" "f"]]
+                      [["g" "h"] ["i" "j"]  ["k" "l"]] ])))
