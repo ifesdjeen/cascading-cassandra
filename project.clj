@@ -3,7 +3,7 @@
   :min-lein-version "2.0.0"
   :license {:name "Apache License 2.0"}
 
-  :dependencies [[org.apache.cassandra/cassandra-all "1.1.5"]]
+  :dependencies [[org.apache.cassandra/cassandra-all "1.1.7"]]
 
   :aot [com.ifesdjeen.cascading.cassandra.testing]
   :java-source-paths ["src/main/java"]

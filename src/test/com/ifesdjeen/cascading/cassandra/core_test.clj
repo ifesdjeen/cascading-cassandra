@@ -20,6 +20,10 @@
            [org.apache.cassandra.utils ByteBufferUtil]
            [org.apache.cassandra.thrift Column]))
 
+(defmapop deserialize-key
+  [k]
+  (ByteBufferUtil/string k))
+
 (defmacro with-thrift-exception-handling
 [& forms]
 `(try
@@ -81,7 +85,8 @@
 
   (fact "Retrieves data"
         (<-
-         [?value1 ?value3]
+         [!value1 ?value3]
+         (deserialize-key ?value1 :> !value1)
          ((create-tap) ?value1 ?value2 ?value3))
         => (produces [["Cassaforte" 3] ["Riak" 5]])))
 
@@ -139,12 +144,11 @@
 
   (fact "Retrieves data"
         (<-
-         [?name ?language ?votes]
+         [!name ?language ?votes]
+         (deserialize-key ?name :> !name)
          (deserialize-values ?columns :> ?language ?votes)
          ((create-tap [] {}) ?name ?columns))
         => (produces [["Cassaforte" "Clojure" 3] ["Riak" "Erlang" 5]])))
-
-
 
 (defmapop deserialize-wide-rows
   [super-columns]
