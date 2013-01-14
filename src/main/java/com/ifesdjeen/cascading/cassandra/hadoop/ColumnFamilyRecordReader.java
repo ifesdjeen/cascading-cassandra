@@ -51,6 +51,7 @@ import org.apache.thrift.transport.TSocket;
 
 import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.cassandra.hadoop.ColumnFamilySplit;
+import org.apache.cassandra.thrift.KeySlice;
 
 public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap<ByteBuffer, IColumn>>
         implements org.apache.hadoop.mapred.RecordReader<ByteBuffer, SortedMap<ByteBuffer, IColumn>> {
@@ -320,15 +321,18 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
                 // remove ghosts when fetching all columns
                 if (isEmptyPredicate) {
                     Iterator<KeySlice> it = rows.iterator();
-                    while (it.hasNext()) {
-                        KeySlice ks = it.next();
-                        if (ks.getColumnsSize() == 0) {
-                            it.remove();
-                        }
-                    }
+										KeySlice ks;
+                    do {
+											ks = it.next();
+											if (ks.getColumnsSize() == 0) {
+												it.remove();
+											}
+										} while (it.hasNext());
 
                     // all ghosts, spooky
                     if (rows.isEmpty()) {
+  											// maybeInit assumes it can get the start-with key from the rows collection, so add back the last
+  											rows.add(ks);
                         maybeInit();
                         return;
                     }
