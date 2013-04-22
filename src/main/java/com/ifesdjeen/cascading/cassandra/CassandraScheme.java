@@ -1,5 +1,7 @@
 package com.ifesdjeen.cascading.cassandra;
 
+import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
+import org.apache.cassandra.exceptions.SyntaxException;
 import cascading.tuple.FieldsResolverException;
 import org.apache.cassandra.db.ColumnSerializer;
 import org.apache.cassandra.thrift.*;
@@ -15,6 +17,7 @@ import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.fs.Path;
 
@@ -25,14 +28,10 @@ import com.ifesdjeen.cascading.cassandra.hadoop.ColumnFamilyInputFormat;
 import com.ifesdjeen.cascading.cassandra.hadoop.CassandraHelper;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.SortedMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.nio.ByteBuffer;
 
+import org.apache.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,39 +42,32 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
   private static final Logger logger = LoggerFactory.getLogger(CassandraTap.class);
 
   private String pathUUID;
+  private Map<String, Object> settings;
+
   private String host;
   private String port;
-  private String keyspace;
   private String columnFamily;
-  private String keyColumnName;
-  private List<String> columnFieldNames;
-  private Map<String, String> fieldMappings;
-	private Map<String, String> settings;
-  private CassandraHelper helper;
-
-  // Use this constructor when using CassandraScheme as a Source
-  public CassandraScheme(String host, String port, String keyspace, String columnFamily, String keyColumnName, List<String> columnFieldNames) {
-    this(host, port, keyspace, columnFamily, keyColumnName, columnFieldNames, null);
-  }
+  private String keyspace;
 
   // Use this constructor when using CassandraScheme as a Sink
-  public CassandraScheme(String host, String port, String keyspace, String columnFamily, String keyColumnName,
-                         List<String> columnFieldNames, Map<String, String> fieldMappings) {
-		this(host, port, keyspace, columnFamily, keyColumnName, columnFieldNames, fieldMappings, null);
-  }
-
-  // Use this constructor when using CassandraScheme as a Sink
-  public CassandraScheme(String host, String port, String keyspace, String columnFamily, String keyColumnName,
-                         List<String> columnFieldNames, Map<String, String> fieldMappings, Map<String, String> settings) {
-    this.host = host;
-    this.port = port;
-    this.keyspace = keyspace;
-    this.columnFamily = columnFamily;
-    this.columnFieldNames = columnFieldNames;
-    this.keyColumnName = keyColumnName;
-    this.fieldMappings = fieldMappings;
-		this.settings = settings;
+  public CassandraScheme(Map<String, Object> settings) {
+    this.settings = settings;
     this.pathUUID = UUID.randomUUID().toString();
+
+    if (this.settings.containsKey("db.port")) {
+      this.port = (String) this.settings.get("db.port");
+    } else {
+      this.port = "9160";
+    }
+
+    if (this.settings.containsKey("db.host")) {
+      this.host = (String) this.settings.get("db.host");
+    } else {
+      this.host = "localhost";
+    }
+
+    this.keyspace = (String) this.settings.get("db.keyspace");
+    this.columnFamily = (String) this.settings.get("db.columnFamily");
   }
 
   /**
@@ -85,9 +77,6 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
   @Override
   public void sourcePrepare(FlowProcess<JobConf> flowProcess,
                             SourceCall<Object[], RecordReader> sourceCall) {
-
-    this.helper = new CassandraHelper(this.host, Integer.parseInt(this.port), this.keyspace, this.columnFamily);
-
     ByteBuffer key = ByteBufferUtil.clone((ByteBuffer) sourceCall.getInput().createKey());
     SortedMap<ByteBuffer, IColumn> value = (SortedMap<ByteBuffer, IColumn>) sourceCall.getInput().createValue();
 
@@ -117,13 +106,12 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
   @Override
   public boolean source(FlowProcess<JobConf> flowProcess,
                         SourceCall<Object[], RecordReader> sourceCall) throws IOException {
-    Tuple result = new Tuple();
+    RecordReader input = sourceCall.getInput();
 
     Object key = sourceCall.getContext()[0];
     Object value = sourceCall.getContext()[1];
 
-    ByteBuffer rowkey = ByteBufferUtil.clone((ByteBuffer) key);
-    boolean hasNext = sourceCall.getInput().next(rowkey, value);
+    boolean hasNext = input.next(key, value);
 
     if (!hasNext) {
       return false;
@@ -131,21 +119,44 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
 
     SortedMap<ByteBuffer, IColumn> columns = (SortedMap<ByteBuffer, IColumn>) value;
 
-    // result.add(ByteBufferUtil.string(rowkey).trim());
-    result.add(rowkey);
+    Tuple result = new Tuple();
 
-    if (!columnFieldNames.isEmpty()) {
-      for (String columnFieldName : columnFieldNames) {
-        IColumn col = columns.get(ByteBufferUtil.bytes(columnFieldName));
+    result.add(ByteBufferUtil.string((ByteBuffer) key));
 
-        if (col != null) {
-          result.add(this.helper.getTypeForColumn(col).compose(col.value()));
-        } else if (columnFieldName != this.keyColumnName) {
-          result.add("");
+    Map<String, String> dataTypes = this.getSourceTypes();
+
+    if (!dataTypes.isEmpty()) {
+      if (columns.values().isEmpty()) {
+        logger.info("Values are empty.");
+      }
+
+      for (IColumn column : columns.values()) {
+        String columnName = ByteBufferUtil.string(column.name());
+        if (dataTypes.containsKey(columnName)) {
+          try {
+            Object val = SerializerHelper.deserialize(column.value(), dataTypes.get(columnName));
+            logger.debug("Putting deserialized column: {}. {}", columnName, val);
+            result.add(val);
+          } catch (Exception e) {
+            logger.error("Couldn't deserialize column: {}. {}", columnName, e.getMessage());
+          }
+        } else {
+          // Assuming wide rows here
+          if ((Boolean) this.settings.get("source.useWideRows")) {
+            try {
+              Object val = SerializerHelper.deserialize(column.name(), dataTypes.get("key"));
+              result.add(val);
+              val = SerializerHelper.deserialize(column.value(), dataTypes.get("value"));
+              result.add(val);
+            } catch (Exception e) {}
+          } else {
+            logger.info("Skipping column, because there was no type given: {}", columnName);
+          }
         }
       }
     } else {
       result.add(columns);
+      logger.debug("No data types given. Assuming custom deserizliation.");
     }
 
     sourceCall.getIncomingEntry().setTuple(result);
@@ -161,12 +172,16 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
   @Override
   public void sink(FlowProcess<JobConf> flowProcess,
                    SinkCall<Object[], OutputCollector> sinkCall) throws IOException {
+
+    List<String> columnFieldNames = getSourceColumns();
+
     TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
     OutputCollector outputCollector = sinkCall.getOutput();
 
-    logger.info("key name {}", this.keyColumnName);
-    logger.info("key mapping name {}", this.fieldMappings.get(this.keyColumnName));
-    Tuple key = tupleEntry.selectTuple(new Fields(this.fieldMappings.get(this.keyColumnName)));
+    String keyColumnName = (String) this.settings.get("sink.keyColumnName");
+    Map<String, String> fieldMappings = (Map<String, String>) this.settings.get("sink.outputMappings");
+
+    Tuple key = tupleEntry.selectTuple(new Fields(fieldMappings.get(keyColumnName)));
     ByteBuffer keyBuffer = CassandraHelper.serialize(key.get(0));
 
     int nfields = columnFieldNames.size();
@@ -221,19 +236,18 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
                            JobConf conf) {
     conf.setOutputFormat(ColumnFamilyOutputFormat.class);
 
-    ConfigHelper.setRangeBatchSize(conf, 100);
+    ConfigHelper.setRangeBatchSize(conf, 1000);
 
     ConfigHelper.setOutputRpcPort(conf, port);
     ConfigHelper.setOutputInitialAddress(conf, host);
 
     if (this.settings.containsKey("cassandra.outputPartitioner")) {
-      ConfigHelper.setOutputPartitioner(conf, this.settings.get("cassandra.outputPartitioner"));
+       ConfigHelper.setOutputPartitioner(conf, (String) this.settings.get("cassandra.outputPartitioner"));
     } else {
-      ConfigHelper.setOutputPartitioner(conf, "org.apache.cassandra.dht.RandomPartitioner");
+       ConfigHelper.setOutputPartitioner(conf, "org.apache.cassandra.dht.Murmur3Partitioner");
     }
 
     ConfigHelper.setOutputColumnFamily(conf, keyspace, columnFamily);
-    conf.setInt(ColumnFamilyInputFormat.CASSANDRA_HADOOP_MAX_KEY_SIZE, 60);
 
     FileOutputFormat.setOutputPath(conf, getPath());
   }
@@ -241,33 +255,92 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
   @Override
   public void sourceConfInit(FlowProcess<JobConf> process,
                              Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf) {
+    logger.info("Configuring source...");
 
+    ConfigHelper.setInputRpcPort(conf, port);
+    ConfigHelper.setInputInitialAddress(conf, this.host);
+
+
+    if (this.settings.containsKey("source.rangeBatchSize")) {
+      ConfigHelper.setRangeBatchSize(conf, (Integer) this.settings.get("source.rangeBatchSize"));
+    } else {
+      ConfigHelper.setRangeBatchSize(conf, 1000);
+    }
+
+    if (this.settings.containsKey("source.inputSplitSize")) {
+      ConfigHelper.setRangeBatchSize(conf, (Integer) this.settings.get("source.inputSplitSize"));
+    } else {
+      ConfigHelper.setInputSplitSize(conf, 50);
+    }
+
+    if (this.settings.containsKey("cassandra.inputPartitioner")) {
+      ConfigHelper.setInputPartitioner(conf, (String) this.settings.get("cassandra.inputPartitioner"));
+    } else {
+      ConfigHelper.setInputPartitioner(conf, "org.apache.cassandra.dht.Murmur3Partitioner");
+    }
+
+    if (this.settings.containsKey("source.predicate")) {
+      ConfigHelper.setInputSlicePredicate(conf, (SlicePredicate) this.settings.get("source.predicate"));
+    } else {
+      SlicePredicate predicate = new SlicePredicate();
+
+      List<String> sourceColumns = this.getSourceColumns();
+
+      if (!sourceColumns.isEmpty()) {
+        logger.debug("Using with following columns: {}", StringUtils.join(sourceColumns, ","));
+
+        List<ByteBuffer> columnNames = new ArrayList<ByteBuffer>();
+        for (String columnFieldName : sourceColumns) {
+          columnNames.add(ByteBufferUtil.bytes(columnFieldName));
+        }
+
+        predicate.setColumn_names(columnNames);
+      } else {
+        logger.debug("Using slicerange over all columns");
+
+        SliceRange sliceRange = new SliceRange();
+        sliceRange.setStart(ByteBufferUtil.bytes(""));
+        sliceRange.setFinish(ByteBufferUtil.bytes(""));
+        predicate.setSlice_range(sliceRange);
+      }
+      ConfigHelper.setInputSlicePredicate(conf, predicate);
+    }
+
+    if (this.settings.containsKey("source.useWideRows")) {
+      ConfigHelper.setInputColumnFamily(conf, this.keyspace, this.columnFamily,
+              (Boolean) this.settings.get("source.useWideRows"));
+    } else {
+      ConfigHelper.setInputColumnFamily(conf, this.keyspace, this.columnFamily);
+    }
     FileInputFormat.addInputPaths(conf, getPath().toString());
     conf.setInputFormat(ColumnFamilyInputFormat.class);
 
-    ConfigHelper.setRangeBatchSize(conf, 100);
-    ConfigHelper.setInputSplitSize(conf, 30);
+		/*
+    ConfigHelper.setRangeBatchSize(conf, 1000);
+		ConfigHelper.setThriftMaxMessageLengthInMb(conf, 120);
+		ConfigHelper.setThriftFramedTransportSizeInMb(conf, 120);
+
     ConfigHelper.setInputRpcPort(conf, port);
     ConfigHelper.setInputInitialAddress(conf, host);
 
     if (this.settings.containsKey("cassandra.inputPartitioner")) {
       ConfigHelper.setInputPartitioner(conf, this.settings.get("cassandra.inputPartitioner"));
     } else {
-      ConfigHelper.setInputPartitioner(conf, "org.apache.cassandra.dht.RandomPartitioner");
+      ConfigHelper.setInputPartitioner(conf, "org.apache.cassandra.dht.Murmur3Partitioner");
     }
 
-
-    ConfigHelper.setInputColumnFamily(conf, keyspace, columnFamily);
-    conf.setInt(ColumnFamilyInputFormat.CASSANDRA_HADOOP_MAX_KEY_SIZE, 60);
+		ConfigHelper.setInputColumnFamily(conf, keyspace, columnFamily, true);
+    // conf.setInt(ColumnFamilyInputFormat.CASSANDRA_HADOOP_MAX_KEY_SIZE, 60);
 
     SlicePredicate predicate = new SlicePredicate();
 
     if (!columnFieldNames.isEmpty()) {
-      List<ByteBuffer> columnNames = new ArrayList<ByteBuffer>();
-      for (String columnFieldName : columnFieldNames) {
-        columnNames.add(ByteBufferUtil.bytes(columnFieldName));
-      }
-      predicate.setColumn_names(columnNames);
+			predicate.setColumn_names(Arrays.asList(ByteBufferUtil.bytes("application")));
+      //List<ByteBuffer> columnNames = new ArrayList<ByteBuffer>();
+      //for (String columnFieldName : columnFieldNames) {
+      //  columnNames.add(ByteBufferUtil.bytes(columnFieldName));
+      //}
+      //predicate.setColumn_names(columnNames);
     } else {
       SliceRange sliceRange = new SliceRange();
       sliceRange.setStart(ByteBufferUtil.bytes(""));
@@ -277,6 +350,8 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
 
     ConfigHelper.setInputSlicePredicate(conf, predicate);
     // ConfigHelper.setInputSplitSize(conf, 3);
+		*/
+
   }
 
   public Path getPath() {
@@ -315,4 +390,20 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     return result;
   }
 
+
+  private List<String> getSourceColumns() {
+    if (this.settings.containsKey("source.columns")) {
+      return (List<String>) this.settings.get("source.columns");
+    } else {
+      return new ArrayList<String>();
+    }
+  }
+
+  private Map<String, String> getSourceTypes() {
+    if (this.settings.containsKey("source.types")) {
+      return (Map<String, String>) this.settings.get("source.types");
+    } else {
+      return new HashMap<String, String>();
+    }
+  }
 }

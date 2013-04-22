@@ -1,16 +1,11 @@
 (ns com.ifesdjeen.cascading.cassandra.core-test
-  (:require [clojurewerkz.cassaforte.client :as cc]
-            [clojurewerkz.cassaforte.schema :as sch]
-            [clojurewerkz.cassaforte.conversion :as cconv]
-            [clojurewerkz.cassaforte.cql    :as cql]
-            [clojurewerkz.cassaforte.bytes  :as bytes]
-
-            [clojurewerkz.cassaforte.thrift.core :as thrift]
-            [clojurewerkz.cassaforte.thrift.column-definition :as cd]
-            [clojurewerkz.cassaforte.thrift.column-family-definition :as cfd]
-            )
+  (:require [clojurewerkz.cassaforte.embedded :as e])
   (:use cascalog.api
         clojure.test
+        clojurewerkz.cassaforte.cql
+        cascalog.playground
+        clojurewerkz.cassaforte.query
+        [clojurewerkz.cassaforte.bytes :as b]
         [midje sweet cascalog])
   (:require [cascalog.io :as io]
             [cascalog.ops :as c])
@@ -20,75 +15,69 @@
            [org.apache.cassandra.utils ByteBufferUtil]
            [org.apache.cassandra.thrift Column]))
 
-(defmapop deserialize-key
-  [k]
-  (ByteBufferUtil/string k))
+(bootstrap-emacs)
 
-(defmacro with-thrift-exception-handling
-[& forms]
-`(try
-   (do ~@forms)
-   (catch org.apache.cassandra.thrift.InvalidRequestException ire#
-     (println (.getWhy ire#)))))
-
-(cc/connect! "127.0.0.1")
-(sch/set-keyspace "CascadingCassandra")
-
+(declare connected?)
 (defn create-test-column-family
   []
-  (with-thrift-exception-handling
-    (cql/drop-column-family "libraries"))
-  (cql/create-column-family "libraries"
-                            {:name      "varchar"
-                             :language  "varchar"
-                             :votes     "int"}
-                            :primary-key :name))
+  (alter-var-root (var *debug-output* ) (constantly false))
+  (when (not (bound? (var *client*)))
+    (connect! ["192.168.60.15"]))
+  (drop-keyspace :cascading_cassandra)
+  (create-keyspace :cascading_cassandra
+                   (with {:replication
+                          {:class "SimpleStrategy"
+                           :replication_factor 1 }}))
+  (use-keyspace :cascading_cassandra)
+  (create-table :libraries
+                (with {:compact-storage true})
+                (column-definitions {:name :varchar
+                                     :language :varchar
+                                     :schmotes :int
+                                     :votes :int
+                                     :primary-key [:name]}))
+  (create-table :libraries_wide
+                (with {:compact-storage true})
+                (column-definitions {:name :varchar
+                                     :language :varchar
+                                     :votes :int
+                                     :primary-key [:name :language]})))
 
 (defn create-tap
-  ([]
-     (create-tap ["name" "language" "votes"] {"name"     "?value1"
-                                              "language" "?value2"
-                                              "votes"    "?value3"}))
-  ([columns mappings]
-      (let [keyspace      "CascadingCassandra"
-            column-family "libraries"
-            scheme        (CassandraScheme. "127.0.0.1"
-                                            "9160"
-                                            keyspace
-                                            column-family
-                                            "name"
-                                            columns
-                                            mappings
-                                            {"cassandra.inputPartitioner" "org.apache.cassandra.dht.RandomPartitioner"
-                                             "cassandra.outputPartitioner" "org.apache.cassandra.dht.RandomPartitioner"})
-            tap           (CassandraTap. scheme)]
-        tap)))
+  [conf]
+  (let [defaults      {"sink.keyColumnName" "name"
+                       "db.host" "192.168.60.15"
+                       "db.port" "9160"
+                       "db.keyspace" "cascading_cassandra"
+                       "db.inputPartitioner" "org.apache.cassandra.dht.Murmur3Partitioner"
+                       "db.outputPartitioner" "org.apache.cassandra.dht.Murmur3Partitioner"}
+        scheme        (CassandraScheme. (merge defaults conf)
+                                        )
+        tap           (CassandraTap. scheme)]
+    tap))
+
 
 (deftest t-cassandra-tap-as-source
   (create-test-column-family)
   (dotimes [counter 100]
-    (cql/insert "libraries" {:name (str "Cassaforte" counter) :language (str "Clojure" counter) :votes (int counter)}))
-
-  (fact "Handles simple calculations"
-        (<-
-         [?count ?sum]
-         ((create-tap) ?value1 ?value2 ?value3)
-         (c/count ?count)
-         (c/sum ?value3 :> ?sum))
-        => (produces [[100 4950]])))
-
-(deftest t-cassandra-tap-as-source-2
-  (create-test-column-family)
-
-  (cql/insert "libraries" {:name "Riak" :language "Erlang" :votes (int 5)})
-  (cql/insert "libraries" {:name "Cassaforte" :language "Clojure" :votes (int 3)})
-
-  (fact "Retrieves data"
-        (<-
-         [!value1 ?value3]
-         (deserialize-key ?value1 :> !value1)
-         ((create-tap) ?value1 ?value2 ?value3))
-        => (produces [["Cassaforte" 3] ["Riak" 5]])))
+    (prepared
+     (insert :libraries
+             (values {:name (str "Cassaforte" counter)
+                      :language (str "Clojure" counter)
+                      :schmotes (int counter)
+                      :votes (int counter)}))))
+  (let [tap (create-tap {"source.types" {"language"    "UTF8Type"
+                                         "schmotes"    "Int32Type"
+                                         "votes"       "Int32Type"}
+                         "source.useWideRows" false
+                         "db.columnFamily" "libraries"})]
+    (fact "Handles simple calculations"
+          (<-
+           [?count ?sum]
+           (tap ?value1 ?value2 ?value3 ?value4)
+           (c/count ?count)
+           (c/sum ?value3 :> ?sum))
+          => (produces [[100 4950]]))))
 
 
 (deftest t-cassandra-tap-as-sink
@@ -96,88 +85,37 @@
   (let [test-data [["Riak" "Erlang"]
                    ["Cassaforte" "Clojure"]]]
 
-    (?<- (create-tap ["name" "language"] {"name"     "?value1"
-                                          "language" "?value2"})
+    (?<- (create-tap {"source.columns" ["name" "language"]
+                      "sink.outputMappings" {"name"     "?value1"
+                                             "language" "?value2"}
+                      "sink.keyColumnName" "name"
+                      "db.columnFamily" "libraries"})
          [?value1 ?value2]
          (test-data ?value1 ?value2))
 
-    (let [res (cconv/to-plain-hash (:rows (cql/execute "SELECT * FROM libraries")))]
-      (is (= {:name "Cassaforte" :language "Clojure" :votes nil}
-             (get res "Cassaforte")))
-      (is (= {:name "Riak" :language "Erlang" :votes nil}
-             (get res "Riak"))))))
+    (let [res (select :libraries)]
+      (is (= "Riak" (:name (first res))))
+      (is (= "Erlang" (:language (first res))))
+      (is (= "Cassaforte" (:name (second res))))
+      (is (= "Clojure" (:language (second res)))))))
 
-;;
-;;  To whom it may concern, same serialization code, but in Java:
-;;
-;;  for (IColumn column : columns.values()) {
-;;    String name  = ByteBufferUtil.string(column.name());
-;;    System.out.print("Name:");
-;;    System.out.println(name);
-;;
-;;    String v = null;
-;;
-;;    if (name.contains("votes"))
-;;      v = String.valueOf(ByteBufferUtil.toInt(column.value()));
-;;    else
-;;      v = ByteBufferUtil.string(column.value());
-;;
-;;    System.out.print("Value:");
-;;    System.out.println(v);
-;;  }
-
-(defmapop deserialize-values
-  [columns]
-  (into []
-        (for [column (.values columns)]
-          (let [name (ByteBufferUtil/string (.name column))
-                raw-value (.value column)]
-            (cond
-              (= "votes" name) (ByteBufferUtil/toInt raw-value)
-              :else (ByteBufferUtil/string raw-value))))))
-
-(deftest t-cassandra-tap-as-source-3
+(deftest t-cassandra-tap-as-source-wide
   (create-test-column-family)
+  (dotimes [counter 100]
+    (prepared
+     (insert :libraries_wide
+             (values {:name     (str "Cassaforte" counter)
+                      :language (str "Clojure" counter)
+                      :votes    (int counter)}))))
 
-  (cql/insert "libraries" {:name "Riak" :language "Erlang" :votes (int 5)})
-  (cql/insert "libraries" {:name "Cassaforte" :language "Clojure" :votes (int 3)})
-
-  (fact "Retrieves data"
-        (<-
-         [!name ?language ?votes]
-         (deserialize-key ?name :> !name)
-         (deserialize-values ?columns :> ?language ?votes)
-         ((create-tap [] {}) ?name ?columns))
-        => (produces [["Cassaforte" "Clojure" 3] ["Riak" "Erlang" 5]])))
-
-(defmapop deserialize-wide-rows
-  [super-columns]
-  (into []
-        (for [super-column (.values super-columns)]
-          (into []
-                (for [column (.getSubColumns super-column)]
-                  (let [name (ByteBufferUtil/string (.name column))
-                        raw-value (.value column)]
-                    (ByteBufferUtil/string raw-value)))))))
-
-(deftest t-cassandra-tap-as-source-4-wide-rows
-  (with-thrift-exception-handling
-    (sch/drop-keyspace "CascadingCassandra"))
-  (sch/add-keyspace "CascadingCassandra"
-                    "org.apache.cassandra.locator.SimpleStrategy"
-                    [(cfd/build-cfd "CascadingCassandra" "libraries" [] :column-type "Super")]
-                    :strategy-opts {"replication_factor" "1"})
-
-  (thrift/batch-mutate
-   {"key1" {"libraries" {:name1 {:first "a" :second "b"} :name2 {:first "c" :second "d"} :name3 {:first "e" :second "f"}}}
-    "key2" {"libraries" {:name1 {:first "g" :second "h"} :name2 {:first "i" :second "j"} :name3 {:first "k" :second "l"}} }}
-   (cconv/to-consistency-level :one)
-   :type :super)
-
-  (fact "Retrieves data"
-        (<-
-         [?name1 ?name2 ?name3]
-         (deserialize-wide-rows ?super-columns :> ?name1 ?name2 ?name3)
-         ((create-tap [] {}) ?name ?super-columns))
-        => (produces [[["a" "b"] ["c" "d"] ["e" "f"]]
-                      [["g" "h"] ["i" "j"]  ["k" "l"]] ])))
+  (let [tap (create-tap {"db.columnFamily" "libraries_wide"
+                         "source.useWideRows" true
+                         "source.types" {"key"   "UTF8Type"
+                                         "value" "Int32Type"}})]
+    (fact "Handles simple calculations"
+          (<-
+           [?count ?sum]
+           (tap ?value1 ?value2 ?value3)
+           (c/count ?count)
+           (c/sum ?value3 :> ?sum))
+          => (produces [[100 4950]]))))

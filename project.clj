@@ -3,21 +3,38 @@
   :min-lein-version "2.0.0"
   :license {:name "Apache License 2.0"}
 
-  :dependencies [[org.apache.cassandra/cassandra-all "1.1.5"]]
+  :dependencies [[org.clojure/clojure "1.5.1"]
 
-  :aot [com.ifesdjeen.cascading.cassandra.testing]
+                 [log4j "1.2.16"]
+                 [org.slf4j/slf4j-log4j12 "1.6.6"]
+
+                 [cascalog "1.10.1"]
+                 [cascading/cascading-hadoop "2.0.8"
+                  :exclusions [org.codehaus.janino/janino
+                               org.apache.hadoop/hadoop-core]]
+                 ;; [org.apache.hadoop/hadoop-core "1.0.4"
+                 ;;  :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
+                 ;; 0.20.2 remains more performant.
+                 [org.apache.hadoop/hadoop-core "0.20.2"
+                  :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
+                 ]
+
+  :aot [com.ifesdjeen.cascading.cassandra.core-test]
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
+  :exclusions [log4j/log4j org.slf4j/slf4j-log4j12]
+  :resource-paths ["resources"]
   :profiles {:dev {:resource-paths     ["src/resources"]
-                   :dependencies [[org.clojure/clojure "1.4.0"]
-                                  [clojurewerkz/cassaforte "1.0.0-beta11-SNAPSHOT"]
-                                  [cascalog "1.10.0"]
-                                  [midje "1.3.0" :exclude [org.clojure/clojure]]
-                                  [midje-cascalog "0.4.0" :exclude [org.clojure/clojure]]
-                     [cascading/cascading-hadoop "2.0.0"
-                      :exclusions [org.codehaus.janino/janino
-                                   org.apache.hadoop/hadoop-core]]
-                                  [org.apache.hadoop/hadoop-core "0.20.2-dev"]]}
+                   :dependencies [[org.xerial.snappy/snappy-java "1.0.5-M3"]
+                                  [clojurewerkz/cassaforte "1.0.0-beta13"
+                                   :exclusions [org.apache.thrift/libthrift]]
+                                  [commons-lang/commons-lang "2.6"]
+                                  [org.apache.thrift/libthrift "0.9.0"]
+                                  [org.apache.cassandra/cassandra-all "1.2.4"
+                                   :exclusions [org.apache.hadoop
+                                                org.apache.thrift/libthrift
+                                                org.apache.httpcomponents/httpclient]]]
+                   }
              }
   :test-selectors {:all     (constantly true)
                    :focus   :focus
@@ -29,5 +46,5 @@
                  "sonatype-snapshots" {:url "http://oss.sonatype.org/content/repositories/snapshots"
                                        :snapshots true
                                        :releases {:checksum :fail :update :always}}}
-  :jvm-opts ["-Xmx768m" "-server" "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n"]
+  :jvm-opts ["-server" "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n"]
   :pedantic :warn)
