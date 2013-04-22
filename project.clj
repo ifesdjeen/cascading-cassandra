@@ -23,13 +23,14 @@
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
   :exclusions [log4j/log4j org.slf4j/slf4j-log4j12]
-  :resource-paths ["resources"]
+  :resource-paths ["src/resources"]
   :profiles {:dev {:resource-paths     ["src/resources"]
                    :dependencies [[org.xerial.snappy/snappy-java "1.0.5-M3"]
                                   [clojurewerkz/cassaforte "1.0.0-beta13"
-                                   :exclusions [org.apache.thrift/libthrift]]
+                                   :exclusions [org.apache.thrift/libthrift]
+                                   ]
                                   [commons-lang/commons-lang "2.6"]
-                                  [org.apache.thrift/libthrift "0.9.0"]
+                                  ;; [org.apache.thrift/libthrift "0.9.0"]
                                   [org.apache.cassandra/cassandra-all "1.2.4"
                                    :exclusions [org.apache.hadoop
                                                 org.apache.thrift/libthrift

@@ -20,14 +20,15 @@
 (declare connected?)
 (defn create-test-column-family
   []
+  (e/start-server!)
   (alter-var-root (var *debug-output* ) (constantly false))
   (when (not (bound? (var *client*)))
-    (connect! ["192.168.60.15"]))
+    (connect! ["127.0.0.1"]))
   (drop-keyspace :cascading_cassandra)
   (create-keyspace :cascading_cassandra
                    (with {:replication
                           {:class "SimpleStrategy"
-                           :replication_factor 1 }}))
+                           :replication_factor 1}}))
   (use-keyspace :cascading_cassandra)
   (create-table :libraries
                 (with {:compact-storage true})
@@ -46,13 +47,12 @@
 (defn create-tap
   [conf]
   (let [defaults      {"sink.keyColumnName" "name"
-                       "db.host" "192.168.60.15"
+                       "db.host" "127.0.0.1"
                        "db.port" "9160"
                        "db.keyspace" "cascading_cassandra"
                        "db.inputPartitioner" "org.apache.cassandra.dht.Murmur3Partitioner"
                        "db.outputPartitioner" "org.apache.cassandra.dht.Murmur3Partitioner"}
-        scheme        (CassandraScheme. (merge defaults conf)
-                                        )
+        scheme        (CassandraScheme. (merge defaults conf))
         tap           (CassandraTap. scheme)]
     tap))
 
@@ -104,9 +104,9 @@
   (dotimes [counter 100]
     (prepared
      (insert :libraries_wide
-             (values {:name     (str "Cassaforte" counter)
+             (values {:name (str "Cassaforte" counter)
                       :language (str "Clojure" counter)
-                      :votes    (int counter)}))))
+                      :votes (int counter)}))))
 
   (let [tap (create-tap {"db.columnFamily" "libraries_wide"
                          "source.useWideRows" true
