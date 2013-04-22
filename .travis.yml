@@ -10,3 +10,4 @@ jdk:
 branches:
   only:
     - master
+
