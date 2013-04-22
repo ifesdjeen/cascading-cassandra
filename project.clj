@@ -47,5 +47,6 @@
                  "sonatype-snapshots" {:url "http://oss.sonatype.org/content/repositories/snapshots"
                                        :snapshots true
                                        :releases {:checksum :fail :update :always}}}
-  :jvm-opts ["-server" "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n"]
+  :jvm-opts ["-server" "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n"
+             "-Xmx768m"]
   :pedantic :warn)
