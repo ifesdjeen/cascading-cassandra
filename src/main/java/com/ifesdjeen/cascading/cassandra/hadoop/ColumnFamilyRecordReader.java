@@ -368,7 +368,9 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
 
       try {
         rows = client.get_paged_slice(cfName, keyRange, lastColumn, consistencyLevel);
-        lastRowKey = ByteBufferUtil.clone(Iterables.getLast(rows).key);
+        if (!rows.isEmpty()) {
+          lastRowKey = ByteBufferUtil.clone(Iterables.getLast(rows).key);
+        }
 
         int n = 0;
         for (KeySlice row : rows) {
