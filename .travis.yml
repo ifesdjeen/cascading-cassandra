@@ -4,15 +4,9 @@ script: lein2 javac && lein2 test
 notifications:
   recipients:
     - oleksandr.petrov@gmail.com
-before_script:
-  - cassandra-cli -f ./bin/ci/before_build.cql
 jdk:
   - openjdk6
   - openjdk7
-  - oraclejdk7
-services:
-  - cassandra
 branches:
   only:
     - master
-    - hadoop-2.0.0-compat
