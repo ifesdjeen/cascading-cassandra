@@ -66,6 +66,7 @@
                       :language (str "Clojure" counter)
                       :schmotes (int counter)
                       :votes (int counter)}))))
+  (Thread/sleep 10000)
   (let [tap (create-tap {"source.types" {"language"    "UTF8Type"
                                          "schmotes"    "Int32Type"
                                          "votes"       "Int32Type"}
