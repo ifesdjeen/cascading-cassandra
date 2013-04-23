@@ -1,17 +1,10 @@
-(defproject com.ifesdjeen/cascading-cassandra "1.0.0-beta1"
+(defproject com.ifesdjeen/cascading-cassandra "1.0.0-SNAPSHOT"
   :description ""
   :min-lein-version "2.0.0"
   :license {:name "Apache License 2.0"}
 
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [cascalog "1.10.1"]
-
-                 ;; [org.apache.hadoop/hadoop-core "1.0.4"
-                 ;;   :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
-                 [org.apache.hadoop/hadoop-core "0.20.2"
-                  :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
-                 ]
-
+                 [cascalog "1.10.1"]]
   :aot               [com.ifesdjeen.cascading.cassandra.core-test]
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
@@ -19,7 +12,12 @@
   :profiles {:provided {:dependencies   [[org.apache.cassandra/cassandra-all "1.2.4"
                                           :exclusions [org.apache.hadoop
                                                        org.apache.thrift/libthrift
-                                                       org.apache.httpcomponents/httpclient]]]}
+                                                       org.apache.httpcomponents/httpclient]]
+                                         ;; [org.apache.hadoop/hadoop-core "1.0.4"
+                                         ;;   :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
+                                         [org.apache.hadoop/hadoop-core "0.20.2"
+                                          :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
+                                         ]}
              :dev      {:resource-paths ["src/resources"]
                         :jvm-opts       ["-server" "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n"
                                          "-Xmx768m"]
