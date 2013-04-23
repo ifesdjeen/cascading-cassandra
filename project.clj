@@ -12,11 +12,10 @@
                  [cascading/cascading-hadoop "2.0.8"
                   :exclusions [org.codehaus.janino/janino
                                org.apache.hadoop/hadoop-core]]
-                 ;; [org.apache.hadoop/hadoop-core "1.0.4"
+                 [org.apache.hadoop/hadoop-core "1.0.4"
+                   :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
+                 ;; [org.apache.hadoop/hadoop-core "0.20.2"
                  ;;  :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
-                 ;; 0.20.2 remains more performant.
-                 [org.apache.hadoop/hadoop-core "0.20.2"
-                  :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
                  ]
 
   :aot [com.ifesdjeen.cascading.cassandra.core-test]
@@ -27,10 +26,8 @@
   :profiles {:dev {:resource-paths     ["src/resources"]
                    :dependencies [[org.xerial.snappy/snappy-java "1.0.5-M3"]
                                   [clojurewerkz/cassaforte "1.0.0-beta13"
-                                   :exclusions [org.apache.thrift/libthrift]
-                                   ]
+                                   :exclusions [org.apache.thrift/libthrift]]
                                   [commons-lang/commons-lang "2.6"]
-                                  ;; [org.apache.thrift/libthrift "0.9.0"]
                                   [org.apache.cassandra/cassandra-all "1.2.4"
                                    :exclusions [org.apache.hadoop
                                                 org.apache.thrift/libthrift
