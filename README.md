@@ -119,3 +119,4 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # Credits
 
 [Alex Petrov](https://twitter.com/ifesdjeen): alexp at coffeenco dot de
+
