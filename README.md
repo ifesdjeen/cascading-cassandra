@@ -19,28 +19,12 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap
 
-// List of columns to be fetched from Cassandra
-List<String> columns = new ArrayList<String>();
-columns.add("first-column-name");
-columns.add("second-column-name");
-columns.add("third-column-name");
+Map<String, String> settings = new HashMap<String, String>();
+mappings.put("db.host, "localhost");
+mappings.put("db.port", "9160");
+// And so on...
 
-// When writing back to cassandra, you may have Cascading output tuple item names
-// a bit different from your Cassandra ColumnFamily definition. Otherwise, you can
-// simply specify both key and value same.
-Map<String, String> mappings = new HashMap<String, String>();
-mappings.put("first-column-name", "cascading-output-tuple-first-item-name");
-mappings.put("second-column-name", "cascading-output-tuple-second-item-name");
-mappings.put("third-column-name", "cascading-output-tuple-third-item-name");
-
-CassandraScheme scheme = new CassandraScheme("127.0.0.1"
-                                             "9160"
-                                             "keyspace-name"
-                                             "column-family-name"
-                                             "key-column-name"
-                                             columns
-                                             mappings);
-
+CassandraScheme scheme = new CassandraScheme(settings);
 CassandraTap tap = new CassandraTap(scheme);
 ```
 
@@ -53,18 +37,38 @@ you can use following code:
   []
   (let [keyspace      "keyspace"
         column-family "column-family"
-        scheme        (CassandraScheme. "127.0.0.1"
-                                        "9160"
-                                        keyspace
-                                        column-family
-                                        "key-column-name"
-                                        ["first-column-name" "second-column-name" "third-column-name"]
-                                        {"first-column-name" "cascading-output-tuple-first-item-name"
-                                         "second-column-name" "cascading-output-tuple-second-item-name"
-                                         "third-column-name" "cascading-output-tuple-third-item-name"})
+        scheme        (CassandraScheme.
+                       {"sink.keyColumnName" "name"
+                        "db.host" "127.0.0.1"
+                        "db.port" "9160"
+                        "db.keyspace" "cascading_cassandra"
+                        "db.inputPartitioner" "org.apache.cassandra.dht.Murmur3Partitioner"
+                        "db.outputPartitioner" "org.apache.cassandra.dht.Murmur3Partitioner"})
         tap           (CassandraTap. scheme)]
     tap))
 ```
+
+# Possible mappings:
+
+DB:
+  * `db.host` - host of the database to connect to
+  * `db.port` - port of the database to connect to
+  * `db.keyspace` - keyspace to use for sink or source
+  * `db.columnFamily` - column family  to use for sink or source
+  * `db.inputPartitioner` - partitiner for DB used as source
+  * `db.outputPartitioner` - partitiner for DB used as sink
+
+Source:
+  * `source.columns` - columns for the source, to be fetched
+  * `source.useWideRows` - wether or not to use wide rows deserialization
+  * `source.types` - data types to use for deserialization.
+    * Examplpe for wide columns: `{"key", "UTF8Type", "value" "Int32Type"}`
+    * Example for static columns: `{"column1" "UTF8Type" "column2" "Int32Type"`
+
+Sink:
+  * `sink.keyColumnName` - key column name for sink
+  * `sink.outputMappings` - output mappings for sink, used to map internal Cascading
+    tuple segment names to database columns.
 
 # Dependency
 
@@ -73,7 +77,7 @@ Jar is hosted on Clojars: https://clojars.org/com.clojurewerkz/cascading-cassand
 ## Leiningen
 
 ```clojure
-[com.clojurewerkz/cascading-cassandra "0.0.3"]
+[com.clojurewerkz/cascading-cassandra "1.0.0-beta1"]
 ```
 
 ## Maven
@@ -82,7 +86,7 @@ Jar is hosted on Clojars: https://clojars.org/com.clojurewerkz/cascading-cassand
 <dependency>
   <groupId>com.clojurewerkz</groupId>
   <artifactId>cascading-cassandra</artifactId>
-  <version>0.0.3</version>
+  <version>1.0.0-beta1</version>
 </dependency>
 ```
 # License
@@ -108,7 +112,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# Contributors 
+# Contributors
 
 [Maximilian Karasz (@mknoszlig)](http://twitter.com/mknoszlig)
 

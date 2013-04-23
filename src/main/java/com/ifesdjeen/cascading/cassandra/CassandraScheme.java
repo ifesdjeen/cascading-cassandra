@@ -314,44 +314,6 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     }
     FileInputFormat.addInputPaths(conf, getPath().toString());
     conf.setInputFormat(ColumnFamilyInputFormat.class);
-
-		/*
-    ConfigHelper.setRangeBatchSize(conf, 1000);
-		ConfigHelper.setThriftMaxMessageLengthInMb(conf, 120);
-		ConfigHelper.setThriftFramedTransportSizeInMb(conf, 120);
-
-    ConfigHelper.setInputRpcPort(conf, port);
-    ConfigHelper.setInputInitialAddress(conf, host);
-
-    if (this.settings.containsKey("cassandra.inputPartitioner")) {
-      ConfigHelper.setInputPartitioner(conf, this.settings.get("cassandra.inputPartitioner"));
-    } else {
-      ConfigHelper.setInputPartitioner(conf, "org.apache.cassandra.dht.Murmur3Partitioner");
-    }
-
-		ConfigHelper.setInputColumnFamily(conf, keyspace, columnFamily, true);
-    // conf.setInt(ColumnFamilyInputFormat.CASSANDRA_HADOOP_MAX_KEY_SIZE, 60);
-
-    SlicePredicate predicate = new SlicePredicate();
-
-    if (!columnFieldNames.isEmpty()) {
-			predicate.setColumn_names(Arrays.asList(ByteBufferUtil.bytes("application")));
-      //List<ByteBuffer> columnNames = new ArrayList<ByteBuffer>();
-      //for (String columnFieldName : columnFieldNames) {
-      //  columnNames.add(ByteBufferUtil.bytes(columnFieldName));
-      //}
-      //predicate.setColumn_names(columnNames);
-    } else {
-      SliceRange sliceRange = new SliceRange();
-      sliceRange.setStart(ByteBufferUtil.bytes(""));
-      sliceRange.setFinish(ByteBufferUtil.bytes(""));
-      predicate.setSlice_range(sliceRange);
-    }
-
-    ConfigHelper.setInputSlicePredicate(conf, predicate);
-    // ConfigHelper.setInputSplitSize(conf, 3);
-		*/
-
   }
 
   public Path getPath() {
