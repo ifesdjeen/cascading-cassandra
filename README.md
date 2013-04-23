@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.HashMap
 
 Map<String, String> settings = new HashMap<String, String>();
-mappings.put("db.host, "localhost");
+mappings.put("db.host", "localhost");
 mappings.put("db.port", "9160");
 // And so on...
 
