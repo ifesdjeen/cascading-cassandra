@@ -91,32 +91,19 @@ Jar is hosted on Clojars: https://clojars.org/com.clojurewerkz/cascading-cassand
 ```
 # License
 
-Copyright (C) 2011-2012 Alex Petrov and contributors
+Copyright (C) 2011-2013 Alex Petrov
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+Double licensed under the Eclipse Public License (the same as Clojure) or
+the Apache Public License 2.0.
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
+[Other Contributors](github.com/ifesdjeen/cascading-cassandra)
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# Thanks
 
-# Contributors
-
-[Maximilian Karasz (@mknoszlig)](http://twitter.com/mknoszlig)
+Thanks to (JetBrains)[http://www.jetbrains.com/] for providing a license
+for (IntelliJIDEA)[http://www.jetbrains.com/idea/] to develop part
+of this project developed in Java.
 
 # Credits
 
 [Alex Petrov](https://twitter.com/ifesdjeen): alexp at coffeenco dot de
-
