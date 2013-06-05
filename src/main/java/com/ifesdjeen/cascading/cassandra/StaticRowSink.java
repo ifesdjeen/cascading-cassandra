@@ -48,27 +48,13 @@ public class StaticRowSink
                 logger.info("Mapped column name {}", columnFieldMapping);
                 logger.info("Column filed value {}", tupleEntry.get(columnFieldMapping));
 
-                Mutation mutation = createColumnPutMutation(CassandraHelper.serialize(columnFieldName),
-                                                            CassandraHelper.serialize(tupleEntry.get(columnFieldMapping)));
+                Mutation mutation = Util.createColumnPutMutation(CassandraHelper.serialize(columnFieldName),
+                                                                 CassandraHelper.serialize(tupleEntry.get(columnFieldMapping)));
                 mutations.add(mutation);
             }
         }
 
         return mutations;
-    }
-
-    protected Mutation createColumnPutMutation(ByteBuffer name, ByteBuffer value) {
-        Column column = new Column(name);
-        column.setName(name);
-        column.setValue(value);
-        column.setTimestamp(System.currentTimeMillis());
-
-        Mutation m = new Mutation();
-        ColumnOrSuperColumn columnOrSuperColumn = new ColumnOrSuperColumn();
-        columnOrSuperColumn.setColumn(column);
-        m.setColumn_or_supercolumn(columnOrSuperColumn);
-
-        return m;
     }
 
     private List<String> getSourceColumns( Map<String, Object> settings) {
