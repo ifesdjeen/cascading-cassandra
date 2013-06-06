@@ -77,7 +77,7 @@ Jar is hosted on Clojars: https://clojars.org/com.clojurewerkz/cascading-cassand
 ## Leiningen
 
 ```clojure
-[com.clojurewerkz/cascading-cassandra "1.0.0-beta1"]
+[com.clojurewerkz/cascading-cassandra "1.0.0-rc1"]
 ```
 
 ## Maven
@@ -86,7 +86,7 @@ Jar is hosted on Clojars: https://clojars.org/com.clojurewerkz/cascading-cassand
 <dependency>
   <groupId>com.clojurewerkz</groupId>
   <artifactId>cascading-cassandra</artifactId>
-  <version>1.0.0-beta1</version>
+  <version>1.0.0-rc1</version>
 </dependency>
 ```
 # License
