@@ -1,4 +1,4 @@
-(defproject com.ifesdjeen/cascading-cassandra "1.0.0-beta2"
+(defproject mccraigmccraig/cascading-cassandra "1.0.0-beta2"
   :description ""
   :min-lein-version "2.0.0"
   :license {:name "Apache License 2.0"}
