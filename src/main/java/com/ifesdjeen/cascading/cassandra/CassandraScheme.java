@@ -173,8 +173,6 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
   public void sink(FlowProcess<JobConf> flowProcess,
                    SinkCall<Object[], OutputCollector> sinkCall) throws IOException {
 
-    List<String> columnFieldNames = getSourceColumns();
-
     TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
     OutputCollector outputCollector = sinkCall.getOutput();
 
@@ -184,29 +182,9 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     Tuple key = tupleEntry.selectTuple(new Fields(fieldMappings.get(keyColumnName)));
     ByteBuffer keyBuffer = CassandraHelper.serialize(key.get(0));
 
-    int nfields = columnFieldNames.size();
-    List mutations = new ArrayList<Mutation>(nfields);
-    // TODO: ADD skipping for name field
-    for (String columnFieldName : columnFieldNames) {
-      String columnFieldMapping = fieldMappings.get(columnFieldName);
-      Object tupleEntryValue = null;
+    ISink sinkImpl = getSinkImpl( (String)this.settings.get("sink.sinkImpl") );
 
-      try {
-        tupleEntryValue = tupleEntry.get(columnFieldMapping);
-      } catch (FieldsResolverException e) {
-        logger.error("Couldn't resolve field: {}", columnFieldName);
-      }
-
-      if (tupleEntryValue != null && columnFieldName != keyColumnName) {
-        logger.info("Column filed name {}", columnFieldName);
-        logger.info("Mapped column name {}", columnFieldMapping);
-        logger.info("Column filed value {}", tupleEntry.get(columnFieldMapping));
-
-        Mutation mutation = createColumnPutMutation(CassandraHelper.serialize(columnFieldName),
-                CassandraHelper.serialize(tupleEntry.get(columnFieldMapping)));
-        mutations.add(mutation);
-      }
-    }
+    List<Mutation> mutations = sinkImpl.sink(settings, tupleEntry);
 
     outputCollector.collect(keyBuffer, mutations);
   }
@@ -367,5 +345,24 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     } else {
       return new HashMap<String, String>();
     }
+  }
+
+  private ISink getSinkImpl(String className)
+  {
+      try {
+          if (className==null) {
+              return new StaticRowSink();
+          }
+          else {
+              Class<ISink> klass = (Class<ISink>)Class.forName(className);
+              return klass.newInstance();
+          }
+      } catch (InstantiationException e) {
+          throw new RuntimeException(e);
+      } catch (IllegalAccessException e) {
+          throw new RuntimeException(e);
+      } catch (ClassNotFoundException e) {
+          throw new RuntimeException(e);
+      }
   }
 }

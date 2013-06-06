@@ -119,3 +119,26 @@
            (c/count ?count)
            (c/sum ?value3 :> ?sum))
           => (produces [[100 4950]]))))
+
+(deftest t-cassandra-tap-as-sink-wide
+  (create-test-column-family)
+  (let [test-data [["Riak" "Erlang" (int 100)]
+                   ["Cassaforte" "Clojure" (int 150)]]]
+
+    (?<- (create-tap {"sink.sinkImpl" "com.ifesdjeen.cascading.cassandra.DynamicRowSink"
+                      "sink.keyColumnName" "name"
+                      "sink.outputMappings" {"name" "?value1"}
+                      "sink.outputWideMappings" {"columnName" "?value2"
+                                                 "columnValue" "?value3"}
+                      "db.columnFamily" "libraries_wide"})
+         [?value1 ?value2 ?value3]
+         (test-data ?value1 ?value2 ?value3))
+
+    (let [res (select :libraries_wide)]
+      (is (= "Riak" (:name (first res))))
+      (is (= "Erlang" (:language (first res))))
+      (is (= "Cassaforte" (:name (second res))))
+      (is (= "Clojure" (:language (second res))))))
+
+
+  )
