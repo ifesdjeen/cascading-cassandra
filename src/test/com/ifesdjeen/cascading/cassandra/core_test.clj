@@ -20,7 +20,7 @@
 (declare connected?)
 (defn create-test-column-family
   []
-;;  (e/start-server!)
+  (e/start-server!)
   (alter-var-root (var *debug-output* ) (constantly false))
   (when (not (bound? (var *client*)))
     (connect! ["127.0.0.1"]))
