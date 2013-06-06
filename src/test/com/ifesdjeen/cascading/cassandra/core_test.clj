@@ -1,5 +1,5 @@
 (ns com.ifesdjeen.cascading.cassandra.core-test
-;;  (:require [clojurewerkz.cassaforte.embedded :as e])
+  (:require [clojurewerkz.cassaforte.embedded :as e])
   (:use cascalog.api
         clojure.test
         clojurewerkz.cassaforte.cql
