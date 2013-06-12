@@ -106,6 +106,7 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
   @Override
   public boolean source(FlowProcess<JobConf> flowProcess,
                         SourceCall<Object[], RecordReader> sourceCall) throws IOException {
+
     RecordReader input = sourceCall.getInput();
 
     Object key = sourceCall.getContext()[0];
@@ -120,48 +121,13 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     SortedMap<ByteBuffer, IColumn> columns = (SortedMap<ByteBuffer, IColumn>) value;
 
     Tuple result = new Tuple();
-
     result.add(ByteBufferUtil.string((ByteBuffer) key));
 
-    Map<String, String> dataTypes = this.getSourceTypes();
-
-    if (!dataTypes.isEmpty()) {
-      if (columns.values().isEmpty()) {
-        logger.info("Values are empty.");
-      }
-
-      for (IColumn column : columns.values()) {
-        String columnName = ByteBufferUtil.string(column.name());
-        if (dataTypes.containsKey(columnName)) {
-          try {
-            Object val = SerializerHelper.deserialize(column.value(), dataTypes.get(columnName));
-            logger.debug("Putting deserialized column: {}. {}", columnName, val);
-            result.add(val);
-          } catch (Exception e) {
-            logger.error("Couldn't deserialize column: {}. {}", columnName, e.getMessage());
-          }
-        } else {
-          // Assuming wide rows here
-          if ((Boolean) this.settings.get("source.useWideRows")) {
-            try {
-              Object val = SerializerHelper.deserialize(column.name(), dataTypes.get("key"));
-              result.add(val);
-              val = SerializerHelper.deserialize(column.value(), dataTypes.get("value"));
-              result.add(val);
-            } catch (Exception e) {}
-          } else {
-            logger.info("Skipping column, because there was no type given: {}", columnName);
-          }
-        }
-      }
-    } else {
-      result.add(columns);
-      logger.debug("No data types given. Assuming custom deserizliation.");
-    }
+    ISource sourceImpl = getSourceImpl();
+    sourceImpl.source(this.settings, columns, result);
 
     sourceCall.getIncomingEntry().setTuple(result);
     return true;
-
   }
 
   /**
@@ -339,14 +305,6 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     }
   }
 
-  private Map<String, String> getSourceTypes() {
-    if (this.settings.containsKey("source.types")) {
-      return (Map<String, String>) this.settings.get("source.types");
-    } else {
-      return new HashMap<String, String>();
-    }
-  }
-
   private ISink getSinkImpl(String className)
   {
       try {
@@ -365,4 +323,31 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
           throw new RuntimeException(e);
       }
   }
+
+  private ISource getSourceImpl()
+  {
+      String className = (String)this.settings.get("source.sourceImpl");
+      Boolean useWideRows = (Boolean)this.settings.get("source.useWideRows");
+
+      try {
+          if (className==null) {
+              if (useWideRows) {
+                  return new DynamicRowSource();
+              } else {
+                  return new StaticRowSource();
+              }
+          }
+          else {
+              Class<ISource> klass = (Class<ISource>)Class.forName(className);
+              return klass.newInstance();
+          }
+      } catch (InstantiationException e) {
+          throw new RuntimeException(e);
+      } catch (IllegalAccessException e) {
+          throw new RuntimeException(e);
+      } catch (ClassNotFoundException e) {
+          throw new RuntimeException(e);
+      }
+  }
+
 }
