@@ -146,7 +146,7 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     Map<String, String> fieldMappings = (Map<String, String>) this.settings.get("sink.outputMappings");
 
     Tuple key = tupleEntry.selectTuple(new Fields(fieldMappings.get(keyColumnName)));
-    ByteBuffer keyBuffer = CassandraHelper.serialize(key.get(0));
+    ByteBuffer keyBuffer = SerializerHelper.serialize(key.get(0));
 
     ISink sinkImpl = getSinkImpl( (String)this.settings.get("sink.sinkImpl") );
 

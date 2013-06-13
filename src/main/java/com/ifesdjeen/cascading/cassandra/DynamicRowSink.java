@@ -6,7 +6,7 @@ import cascading.tuple.TupleEntry;
 import cascading.tuple.FieldsResolverException;
 import org.apache.cassandra.thrift.*;
 
-import com.ifesdjeen.cascading.cassandra.hadoop.CassandraHelper;
+import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 
 import java.io.IOException;
 import java.util.*;
@@ -52,8 +52,8 @@ public class DynamicRowSink
             logger.info("Mapped column value field {}", columnValueField);
             logger.info("Column value value {}", tupleEntryColumnValueValue);
 
-            Mutation mutation = Util.createColumnPutMutation(CassandraHelper.serialize(tupleEntryColumnNameValue),
-                                                             CassandraHelper.serialize(tupleEntryColumnValueValue));
+            Mutation mutation = Util.createColumnPutMutation(SerializerHelper.serialize(tupleEntryColumnNameValue),
+                                                             SerializerHelper.serialize(tupleEntryColumnValueValue));
             mutations.add(mutation);
         }
 

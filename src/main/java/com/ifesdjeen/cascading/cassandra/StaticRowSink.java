@@ -6,7 +6,7 @@ import cascading.tuple.TupleEntry;
 import cascading.tuple.FieldsResolverException;
 import org.apache.cassandra.thrift.*;
 
-import com.ifesdjeen.cascading.cassandra.hadoop.CassandraHelper;
+import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 
 import java.io.IOException;
 import java.util.*;
@@ -48,8 +48,8 @@ public class StaticRowSink
                 logger.info("Mapped column name {}", columnFieldMapping);
                 logger.info("Column filed value {}", tupleEntry.get(columnFieldMapping));
 
-                Mutation mutation = Util.createColumnPutMutation(CassandraHelper.serialize(columnFieldName),
-                                                                 CassandraHelper.serialize(tupleEntry.get(columnFieldMapping)));
+                Mutation mutation = Util.createColumnPutMutation(SerializerHelper.serialize(columnFieldName),
+                                                                 SerializerHelper.serialize(tupleEntry.get(columnFieldMapping)));
                 mutations.add(mutation);
             }
         }
