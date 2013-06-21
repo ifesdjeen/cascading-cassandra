@@ -19,8 +19,10 @@ public class SerializerHelper {
     private static final Logger LOG = LoggerFactory.getLogger(SerializerHelper.class);
 
     public static Object deserialize(ByteBuffer bb, String type) throws SyntaxException, ConfigurationException {
+        return deserialize(bb, inferType(type));
+    }
 
-        AbstractType t = inferType(type);
+    public static Object deserialize(ByteBuffer bb, AbstractType t) throws SyntaxException, ConfigurationException {
 
         if (t instanceof CompositeType) {
             CompositeType ct = (CompositeType)t;
@@ -40,8 +42,12 @@ public class SerializerHelper {
         }
     }
 
-  public static AbstractType inferType(String t) throws SyntaxException, ConfigurationException {
-    return org.apache.cassandra.db.marshal.TypeParser.parse(t);
+  public static AbstractType inferType(String t) {
+      try {
+          return org.apache.cassandra.db.marshal.TypeParser.parse(t);
+      } catch (Exception e) {
+          throw new RuntimeException(e);
+      }
   }
 
   public static ByteBuffer serialize(Object obj) {
@@ -77,10 +83,6 @@ public class SerializerHelper {
     } else if (obj instanceof String) {
       LOG.debug("Serializing {} as String.", obj);
       return stringToByteBuffer((String) obj);
-    } else if (obj instanceof Object[]) {
-      return arrayToByteBuffer((Object[]) obj);
-    } else if (obj instanceof List) {
-      return arrayToByteBuffer(((List)obj).toArray());
     }
 
     LOG.error("Could not serialize {}. Java reports type: {}", obj, obj.getClass().toString());
@@ -88,8 +90,8 @@ public class SerializerHelper {
     return null;
   }
 
-    public static ByteBuffer arrayToByteBuffer(Object[] objs) {
-
+    public static ByteBuffer serializeComposite(List components, CompositeType t) {
+        return null;
     }
 
   public static ByteBuffer bigIntegerToByteBuffer(BigInteger obj) {

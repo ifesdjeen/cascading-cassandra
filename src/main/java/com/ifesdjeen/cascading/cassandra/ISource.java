@@ -15,16 +15,4 @@ public interface ISource {
     void source( Map<String, Object> settings,
                  SortedMap<ByteBuffer, IColumn> value,
                  Tuple result ) throws IOException;
-
-    public static class Util {
-
-        public static  Map<String, String> getSourceTypes( Map<String, Object> settings ) {
-            if (settings.containsKey("source.types")) {
-                return (Map<String, String>) settings.get("source.types");
-            } else {
-                return new HashMap<String, String>();
-            }
-        }
-    }
-
 }

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import cascading.tuple.Tuple;
 
+import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.IColumn;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
@@ -18,39 +19,40 @@ import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 public class StaticRowSource
     implements ISource {
 
-    private static final Logger logger = LoggerFactory.getLogger(StaticRowSink.class);
+    private static final Logger logger = LoggerFactory.getLogger(StaticRowSource.class);
 
     public void source( Map<String, Object> settings,
                         SortedMap<ByteBuffer, IColumn> columns,
                         Tuple result ) throws IOException {
 
-        Map<String, String> dataTypes = Util.getSourceTypes(settings);
+        Map<String, String> dataTypes = SettingsHelper.getTypes(settings);
+        List<String> sourceMappings = SettingsHelper.getSourceMappings(settings);
 
-        if (!dataTypes.isEmpty()) {
+        if (columns.values().isEmpty()) {
+            logger.info("Values are empty.");
+        }
 
-            if (columns.values().isEmpty()) {
-                logger.info("Values are empty.");
-            }
+        Map<String, IColumn> columnsByStringName = new HashMap<String, IColumn>();
+        for (IColumn column : columns.values()) {
+            columnsByStringName.put( ByteBufferUtil.string( column.name() ),
+                                     column );
+        }
 
-            for (IColumn column : columns.values()) {
-
-                String columnName = ByteBufferUtil.string(column.name());
-
-                if (dataTypes.containsKey(columnName)) {
-                    try {
-                        Object val = SerializerHelper.deserialize(column.value(), dataTypes.get(columnName));
-                        logger.debug("Putting deserialized column: {}. {}", columnName, val);
-                        result.add(val);
-                    } catch (Exception e) {
-                        logger.error("Couldn't deserialize column: {}. {}", columnName, e.getMessage());
-                    }
-                } else {
-                    logger.info("Skipping column, because there was no type given: {}", columnName);
+        for(String columnName : sourceMappings) {
+            AbstractType columnValueType = SerializerHelper.inferType( dataTypes.get(columnName) );
+            if (columnValueType != null) {
+                try {
+                    IColumn column = columnsByStringName.get(columnName);
+                    Object val = SerializerHelper.deserialize(column.value(), columnValueType);
+                    logger.debug("Putting deserialized column: {}. {}", columnName, val);
+                    result.add(val);
+                } catch (Exception e) {
+                    throw new RuntimeException("Couldn't deserialize column: {}. {}" + columnName, e);
                 }
+            } else {
+                throw new RuntimeException( "no type given for column: " + columnName );
             }
-        } else {
-            result.add(columns);
-            logger.debug("No data types given. Assuming custom deserizliation.");
+
         }
     }
 }

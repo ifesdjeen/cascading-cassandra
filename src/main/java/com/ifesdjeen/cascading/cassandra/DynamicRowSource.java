@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import cascading.tuple.Tuple;
 
+import org.apache.cassandra.db.marshal.AbstractType;
+import org.apache.cassandra.db.marshal.CompositeType;
 import org.apache.cassandra.db.IColumn;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
@@ -18,35 +20,44 @@ import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 public class DynamicRowSource
     implements ISource {
 
-    private static final Logger logger = LoggerFactory.getLogger(StaticRowSink.class);
+    private static final Logger logger = LoggerFactory.getLogger(DynamicRowSource.class);
 
     public void source( Map<String, Object> settings,
                         SortedMap<ByteBuffer, IColumn> columns,
                         Tuple result ) throws IOException {
 
-        Map<String, String> dataTypes = Util.getSourceTypes(settings);
+        Map<String, String> dataTypes = SettingsHelper.getDynamicTypes(settings);
+        Map<String, String> dynamicMappings = SettingsHelper.getDynamicMappings(settings);
 
-        if (!dataTypes.isEmpty()) {
-
-            if (columns.values().isEmpty()) {
-                logger.info("Values are empty.");
-            }
-
-            for (IColumn column : columns.values()) {
-
-                String columnName = ByteBufferUtil.string(column.name());
-
-                try {
-                    Object val = SerializerHelper.deserialize(column.name(), dataTypes.get("key"));
-                    result.add(val);
-                    val = SerializerHelper.deserialize(column.value(), dataTypes.get("value"));
-                    result.add(val);
-                } catch (Exception e) {}
-
-            }
-        } else {
-            result.add(columns);
-            logger.debug("No data types given. Assuming custom deserizliation.");
+        if (columns.values().isEmpty()) {
+            logger.info("Values are empty.");
         }
+
+        AbstractType columnNameType = SerializerHelper.inferType( dataTypes.get("columnName") );
+        AbstractType columnValueType = SerializerHelper.inferType( dataTypes.get( "columnValue" ) );
+
+        for (IColumn column : columns.values()) {
+
+            String columnName = ByteBufferUtil.string(column.name());
+
+            try {
+                if (columnNameType instanceof CompositeType) {
+                    List components = (List)SerializerHelper.deserialize(column.name(), columnNameType);
+                    for(Object component : components) {
+                        result.add(component);
+                    }
+                } else {
+                    Object val = SerializerHelper.deserialize(column.name(), columnNameType);
+                    result.add(val);
+                }
+
+                Object colVal = SerializerHelper.deserialize(column.value(), columnValueType );
+                result.add(colVal);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
     }
 }

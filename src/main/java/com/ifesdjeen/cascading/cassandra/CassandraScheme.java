@@ -39,7 +39,7 @@ import org.apache.cassandra.db.IColumn;
 
 public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollector, Object[], Object[]> {
 
-  private static final Logger logger = LoggerFactory.getLogger(CassandraTap.class);
+  private static final Logger logger = LoggerFactory.getLogger(CassandraScheme.class);
 
   private String pathUUID;
   private Map<String, Object> settings;
@@ -142,36 +142,16 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
     OutputCollector outputCollector = sinkCall.getOutput();
 
-    String keyColumnName = (String) this.settings.get("sink.keyColumnName");
-    Map<String, String> fieldMappings = (Map<String, String>) this.settings.get("sink.outputMappings");
+    String rowKeyField = SettingsHelper.getSinkMappingRowKeyField(settings);
 
-    Tuple key = tupleEntry.selectTuple(new Fields(fieldMappings.get(keyColumnName)));
+    Tuple key = tupleEntry.selectTuple(new Fields( rowKeyField ));
     ByteBuffer keyBuffer = SerializerHelper.serialize(key.get(0));
 
-    ISink sinkImpl = getSinkImpl( (String)this.settings.get("sink.sinkImpl") );
+    ISink sinkImpl = getSinkImpl();
 
     List<Mutation> mutations = sinkImpl.sink(settings, tupleEntry);
 
     outputCollector.collect(keyBuffer, mutations);
-  }
-
-  /**
-   * @param name
-   * @param value
-   * @return
-   */
-  protected Mutation createColumnPutMutation(ByteBuffer name, ByteBuffer value) {
-    Column column = new Column(name);
-    column.setName(name);
-    column.setValue(value);
-    column.setTimestamp(System.currentTimeMillis());
-
-    Mutation m = new Mutation();
-    ColumnOrSuperColumn columnOrSuperColumn = new ColumnOrSuperColumn();
-    columnOrSuperColumn.setColumn(column);
-    m.setColumn_or_supercolumn(columnOrSuperColumn);
-
-    return m;
   }
 
   @Override
@@ -305,11 +285,18 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     }
   }
 
-  private ISink getSinkImpl(String className)
+  private ISink getSinkImpl()
   {
+      String className = (String)this.settings.get("sink.sinkImpl");
+      boolean useWideRows = SettingsHelper.isDynamicMapping(this.settings);
+
       try {
           if (className==null) {
-              return new StaticRowSink();
+              if (useWideRows) {
+                  return new DynamicRowSink();
+              } else {
+                  return new StaticRowSink();
+              }
           }
           else {
               Class<ISink> klass = (Class<ISink>)Class.forName(className);
@@ -327,7 +314,7 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
   private ISource getSourceImpl()
   {
       String className = (String)this.settings.get("source.sourceImpl");
-      Boolean useWideRows = (Boolean)this.settings.get("source.useWideRows");
+      boolean useWideRows = SettingsHelper.isDynamicMapping(this.settings);
 
       try {
           if (className==null) {

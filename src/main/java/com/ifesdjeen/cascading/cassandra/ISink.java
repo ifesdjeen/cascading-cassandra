@@ -2,6 +2,8 @@ package com.ifesdjeen.cascading.cassandra;
 
 import cascading.tuple.TupleEntry;
 import org.apache.cassandra.thrift.*;
+
+import java.io.IOException;
 import java.util.*;
 
 import java.nio.ByteBuffer;
@@ -9,7 +11,7 @@ import java.nio.ByteBuffer;
 
 public interface ISink {
     List<Mutation> sink( Map<String, Object> settings,
-                         TupleEntry tupleEntry );
+                         TupleEntry tupleEntry ) throws IOException;
 
     public static class Util {
 
