@@ -142,7 +142,7 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
     OutputCollector outputCollector = sinkCall.getOutput();
 
-    String rowKeyField = SettingsHelper.getSinkMappingRowKeyField(settings);
+    String rowKeyField = SettingsHelper.getMappingRowKeyField(settings);
 
     Tuple key = tupleEntry.selectTuple(new Fields( rowKeyField ));
     ByteBuffer keyBuffer = SerializerHelper.serialize(key.get(0));

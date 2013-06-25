@@ -24,7 +24,7 @@ public class StaticRowSink
     public List<Mutation> sink( Map<String, Object> settings,
                                 TupleEntry tupleEntry ) {
 
-        String rowKeyField = SettingsHelper.getSinkMappingRowKeyField(settings);
+        String rowKeyField = SettingsHelper.getMappingRowKeyField(settings);
 
         Map<String, String> sinkMappings = SettingsHelper.getSinkMappings(settings);
         int nfields = sinkMappings.size();

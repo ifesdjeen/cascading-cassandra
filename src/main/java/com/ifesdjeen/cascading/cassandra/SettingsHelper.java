@@ -30,14 +30,6 @@ public class SettingsHelper {
         }
     }
 
-    public static String getSinkMappingRowKeyField( Map<String, Object> settings ) {
-        String rowKeyField = (String)settings.get("mappings.sink.rowKeyField");
-        if (rowKeyField == null) {
-            throw new RuntimeException("no setting: mappings.sink.rowKeyField");
-        }
-        return rowKeyField;
-    }
-
     public static Map<String,String> getSinkMappings( Map<String, Object> settings ) {
         Map<String, String> sinkMappings = (Map<String,String>)settings.get("mappings.sink");
         if (sinkMappings == null ) {
@@ -62,6 +54,30 @@ public class SettingsHelper {
             throw new RuntimeException( "no setting: mappings.dynamic" );
         }
         return dynamicMappings;
+    }
+
+    /** get the field containing the row-key... different ways of getting it depending
+     *  on whether this is a static or dynamic mapping */
+    public static String getMappingRowKeyField( Map<String, Object> settings ) {
+        if (isDynamicMapping( settings) ) {
+            Map<String,String> dynamicMappings = getDynamicMappings(settings);
+            String rowKeyField = dynamicMappings.get("rowKey");
+            if (rowKeyField == null) {
+                throw new RuntimeException( "must set a rowKey mapping in mappings.dynamic");
+            }
+            return rowKeyField;
+        } else {
+            String rowKeyColumn = (String)settings.get("mappings.rowKey");
+            if (rowKeyColumn == null) {
+                throw new RuntimeException( "must set mappings.rowKey" );
+            }
+            Map<String,String> sinkMappings = getSinkMappings(settings);
+            String rowKeyField = sinkMappings.get(rowKeyColumn);
+            if (rowKeyField == null) {
+                throw new RuntimeException( "must set a '" + rowKeyColumn + "' mapping in mappings.sink");
+            }
+            return rowKeyField;
+        }
     }
 
     /** is the mapping dynamic */

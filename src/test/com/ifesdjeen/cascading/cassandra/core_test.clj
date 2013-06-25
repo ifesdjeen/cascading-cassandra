@@ -75,10 +75,10 @@
                       :schmotes (int counter)
                       :votes (int (* 2 counter))}))))
   (let [tap (create-tap {"db.columnFamily" "libraries"
-                         "types" {"name" "UTF8Type"
-                                  "language"    "UTF8Type"
-                                  "schmotes"    "Int32Type"
-                                  "votes"       "Int32Type"}
+                         "types" {"name"      "UTF8Type"
+                                  "language"  "UTF8Type"
+                                  "schmotes"  "Int32Type"
+                                  "votes"     "Int32Type"}
                          "mappings.source" ["language" "schmotes" "votes"]})
         query (<- [?count ?sum3 ?sum4]
                   (tap ?value1 ?value2 ?value3 ?value4)
@@ -94,11 +94,11 @@
                    ["Cassaforte" "Clojure" (int 300) (int 400)]]]
 
     (?<- (create-tap {"db.columnFamily" "libraries"
-                      "types" {"name" "UTF8Type"
-                               "language"    "UTF8Type"
-                               "schmotes"    "Int32Type"
-                               "votes"       "Int32Type"}
-                      "mappings.sink.rowKeyField" "?value1"
+                      "types" {"name"      "UTF8Type"
+                               "language"  "UTF8Type"
+                               "schmotes"  "Int32Type"
+                               "votes"     "Int32Type"}
+                      "mappings.rowKey" "name"
                       "mappings.sink" {"name"     "?value1"
                                        "language" "?value2"
                                        "schmotes" "?value3"
@@ -151,7 +151,6 @@
                                        "columnName"  "UTF8Type"
                                        "columnValue" "Int32Type"}
 
-                      "mappings.sink.rowKeyField" "?value1"
                       "mappings.dynamic" {"rowKey"      "?value1"
                                           "columnName"  "?value2"
                                           "columnValue" "?value3"}})
@@ -180,8 +179,8 @@
                                           "columnName"  "CompositeType(UTF8Type, Int32Type)"
                                           "columnValue" "Int32Type"}
                          "mappings.dynamic" {"rowKey"      "?value1"
-                                             "columnName"  "?value2"
-                                             "columnValue" "?value3"}})
+                                             "columnName"  ["?value2" "?value3"]
+                                             "columnValue" "?value4"}})
         query (<- [?count ?version-sum ?votes-sum]
                   (tap ?value1 ?value2 ?value3 ?value4)
                   (c/count ?count)
@@ -202,7 +201,6 @@
                                        "columnName"  "CompositeType(UTF8Type, Int32Type)"
                                        "columnValue" "Int32Type"}
 
-                      "mappings.sink.rowKeyField" "?value1"
                       "mappings.dynamic" {"rowKey"      "?value1"
                                           "columnName"  ["?value2" "?value3"]
                                           "columnValue" "?value4"}})
