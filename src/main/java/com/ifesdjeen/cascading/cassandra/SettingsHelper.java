@@ -82,15 +82,14 @@ public class SettingsHelper {
 
     /** is the mapping dynamic */
     public static boolean isDynamicMapping( Map<String, Object> settings ) {
-        return settings.containsKey("types.dynamic") &&
-            settings.containsKey("mappings.dynamic");
+        return settings.containsKey("types.dynamic");
     }
 
     /** is the mapping static */
     public static boolean isStaticMapping( Map<String, Object> settings ) {
         return settings.containsKey("types") &&
             ( settings.containsKey("mappings.source") ||
-              (settings.containsKey("mappings.sink.rowKey") &&
+              (settings.containsKey("mappings.rowKey") &&
                settings.containsKey("mappings.sink")));
     }
 

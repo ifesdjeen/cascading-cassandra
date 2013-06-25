@@ -129,10 +129,7 @@
   (let [tap (create-tap {"db.columnFamily" "libraries_wide"
                          "types.dynamic" {"rowKey"      "UTF8Type"
                                           "columnName"  "UTF8Type"
-                                          "columnValue" "Int32Type"}
-                         "mappings.dynamic" {"rowKey"      "?value1"
-                                             "columnName"  "?value2"
-                                             "columnValue" "?value3"}})
+                                          "columnValue" "Int32Type"}})
         query (<- [?count ?sum]
                   (tap ?value1 ?value2 ?value3)
                   (c/count ?count)
@@ -177,18 +174,15 @@
 
                          "types.dynamic" {"rowKey"      "UTF8Type"
                                           "columnName"  "CompositeType(UTF8Type, Int32Type)"
-                                          "columnValue" "Int32Type"}
-                         "mappings.dynamic" {"rowKey"      "?value1"
-                                             "columnName"  ["?value2" "?value3"]
-                                             "columnValue" "?value4"}})
+                                          "columnValue" "Int32Type"}})
         query (<- [?count ?version-sum ?votes-sum]
                   (tap ?value1 ?value2 ?value3 ?value4)
                   (c/count ?count)
                   (c/sum ?value3 :> ?version-sum)
                   (c/sum ?value4 :> ?votes-sum))]
     (fact "Handles simple calculations"
-          query
-          => (produces [[100 500 4950]]))))
+      query
+      => (produces [[100 500 4950]]))))
 
 (deftest t-cassandra-tap-as-sink-wide-composite
   (create-test-column-family)

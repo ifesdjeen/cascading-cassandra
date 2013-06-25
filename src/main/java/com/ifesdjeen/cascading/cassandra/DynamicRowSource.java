@@ -27,7 +27,6 @@ public class DynamicRowSource
                         Tuple result ) throws IOException {
 
         Map<String, String> dataTypes = SettingsHelper.getDynamicTypes(settings);
-        Map<String, String> dynamicMappings = SettingsHelper.getDynamicMappings(settings);
 
         if (columns.values().isEmpty()) {
             logger.info("Values are empty.");
