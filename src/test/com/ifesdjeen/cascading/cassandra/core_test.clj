@@ -209,7 +209,7 @@
          [?value1 ?value2 ?value3 ?value4]
          (test-data ?value1 ?value2 ?value3 ?value4))
 
-    (let [res (select :libraries_composite)]
+    (let [res (select :libraries_wide_composite)]
       (is (= "Riak" (:name (first res))))
       (is (= "Erlang" (:language (first res))))
       (is (= 5 (:version (first res))))
