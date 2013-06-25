@@ -43,6 +43,9 @@ public class SerializerHelper {
     }
 
   public static AbstractType inferType(String t) {
+      if (t == null) {
+          throw new RuntimeException("can't infer type from 'null'");
+      }
       try {
           return org.apache.cassandra.db.marshal.TypeParser.parse(t);
       } catch (Exception e) {

@@ -32,12 +32,7 @@ public class DynamicRowSink
         Map<String, String> dataTypes = SettingsHelper.getDynamicTypes(settings);
         Map<String, String> dynamicMappings = SettingsHelper.getDynamicMappings(settings);
 
-        AbstractType columnNameType = null;
-        try {
-            columnNameType = SerializerHelper.inferType(dataTypes.get("columnName"));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        AbstractType columnNameType = SerializerHelper.inferType(dataTypes.get("columnName"));
 
         Object columnNameFieldSpec = dynamicMappings.get("columnName");
         List<String> columnNameFields = new ArrayList<String>();
