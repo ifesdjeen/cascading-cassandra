@@ -28,14 +28,13 @@ public class StaticRowSource
         Map<String, String> dataTypes = SettingsHelper.getTypes(settings);
         List<String> sourceMappings = SettingsHelper.getSourceMappings(settings);
 
-        if (columns.values().isEmpty()) {
-            logger.info("Values are empty.");
-        }
-
-        Map<String, IColumn> columnsByStringName = new HashMap<String, IColumn>();
-        for (IColumn column : columns.values()) {
-            columnsByStringName.put( ByteBufferUtil.string( column.name() ),
-                                     column );
+        Map<String,IColumn> columnsByStringName = new HashMap<String,IColumn>();
+        for(ByteBuffer columnName : columns.keySet()) {
+            String stringName = ByteBufferUtil.string(columnName);
+            logger.info("column name: {}", stringName);
+            IColumn col = columns.get(columnName);
+            logger.info("column: {}", col);
+            columnsByStringName.put(stringName, col);
         }
 
         for(String columnName : sourceMappings) {
@@ -43,16 +42,19 @@ public class StaticRowSource
             if (columnValueType != null) {
                 try {
                     IColumn column = columnsByStringName.get(columnName);
-                    Object val = SerializerHelper.deserialize(column.value(), columnValueType);
-                    logger.debug("Putting deserialized column: {}. {}", columnName, val);
+                    ByteBuffer serializedVal = column.value();
+                    Object val = null;
+                    if (serializedVal != null) {
+                        val = SerializerHelper.deserialize(serializedVal, columnValueType);
+                    }
+                    logger.info("Putting deserialized column: {}. {}", columnName, val);
                     result.add(val);
                 } catch (Exception e) {
-                    throw new RuntimeException("Couldn't deserialize column: {}. {}" + columnName, e);
+                    throw new RuntimeException("Couldn't deserialize column: " + columnName, e);
                 }
             } else {
                 throw new RuntimeException( "no type given for column: " + columnName );
             }
-
         }
     }
 }

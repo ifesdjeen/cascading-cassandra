@@ -79,14 +79,14 @@
                                   "language"    "UTF8Type"
                                   "schmotes"    "Int32Type"
                                   "votes"       "Int32Type"}
-                         "mappings.source" ["name" "language" "schmotes" "votes"]})
+                         "mappings.source" ["language" "schmotes" "votes"]})
         query (<- [?count ?sum3 ?sum4]
                   (tap ?value1 ?value2 ?value3 ?value4)
                   (c/count ?count)
                   (c/sum ?value3 :> ?sum3)
                   (c/sum ?value4 :> ?sum4))]
 
-    (fact?- (produces [[100 4950 9900]]))))
+    (fact (??- query) => [[[100 4950 9900]]])))
 
 (deftest t-cassandra-tap-as-sink
   (create-test-column-family)
