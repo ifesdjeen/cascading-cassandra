@@ -4,9 +4,14 @@ import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import cascading.tuple.FieldsResolverException;
+
+
+import org.apache.cassandra.db.marshal.AbstractType;
+import org.apache.cassandra.db.marshal.CompositeType;
+import org.apache.cassandra.db.marshal.AbstractCompositeType;
 import org.apache.cassandra.thrift.*;
 
-import com.ifesdjeen.cascading.cassandra.hadoop.CassandraHelper;
+import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 
 import java.io.IOException;
 import java.util.*;
@@ -22,44 +27,60 @@ public class DynamicRowSink
     private static final Logger logger = LoggerFactory.getLogger(DynamicRowSink.class);
 
     public List<Mutation> sink( Map<String, Object> settings,
-                                TupleEntry tupleEntry ) {
+                                TupleEntry tupleEntry ) throws IOException {
 
-        String keyColumnName = (String) settings.get("sink.keyColumnName");
+        Map<String, String> dataTypes = SettingsHelper.getDynamicTypes(settings);
+        Map<String, String> dynamicMappings = SettingsHelper.getDynamicMappings(settings);
 
-        Map<String, String> wideMappings = (Map<String, String>) settings.get("sink.outputWideMappings");
-        String columnNameField = (String) wideMappings.get("columnName");
-        String columnValueField = (String) wideMappings.get("columnValue");
+        AbstractType columnNameType = SerializerHelper.inferType(dataTypes.get("columnName"));
 
-        List<Mutation> mutations = new ArrayList<Mutation>();
-
-        Object tupleEntryColumnNameValue = null;
-        try {
-            tupleEntryColumnNameValue = tupleEntry.get(columnNameField);
-        } catch (FieldsResolverException e) {
-            logger.error("Couldn't resolve column name field: {}", columnNameField);
+        Object columnNameFieldSpec = dynamicMappings.get("columnName");
+        List<String> columnNameFields = new ArrayList<String>();
+        if (columnNameFieldSpec instanceof String) {
+            columnNameFields.add((String)columnNameFieldSpec);
+        } else {
+            columnNameFields.addAll((List<String>)columnNameFieldSpec);
         }
 
+        List tupleEntryColumnNameValues = new ArrayList();
+        for(String columnNameField : columnNameFields) {
+            try {
+                Object columnNameValue = tupleEntry.getObject(columnNameField);
+                logger.info("column name component field: {}", columnNameField);
+                logger.info("column name component value: {}", columnNameValue);
+                tupleEntryColumnNameValues.add( columnNameValue );
+            } catch (FieldsResolverException e) {
+                throw new RuntimeException("Couldn't resolve column name field: " + columnNameField);
+            }
+        }
+
+        String columnValueField = (String) dynamicMappings.get("columnValue");
         Object tupleEntryColumnValueValue = null;
         try {
-            tupleEntryColumnValueValue = tupleEntry.get(columnValueField);
+            tupleEntryColumnValueValue = tupleEntry.getObject(columnValueField);
+            logger.info("column value field: {}", columnValueField);
+            logger.info("column value value: {}", tupleEntryColumnValueValue);
         } catch (FieldsResolverException e) {
-            logger.error("Couldn't resolve column value field: {}", columnValueField);
+            throw new RuntimeException("Couldn't resolve column value field: " + columnValueField);
         }
 
-        if (tupleEntryColumnNameValue != null && tupleEntryColumnNameValue != keyColumnName) {
-            logger.info("Mapped column name field {}", columnNameField);
-            logger.info("column name value {}", tupleEntryColumnNameValue);
-            logger.info("Mapped column value field {}", columnValueField);
-            logger.info("Column value value {}", tupleEntryColumnValueValue);
+        List<Mutation> mutations = new ArrayList<Mutation>();
+        if (tupleEntryColumnNameValues.size() > 0) {
 
-            Mutation mutation = Util.createColumnPutMutation(CassandraHelper.serialize(tupleEntryColumnNameValue),
-                                                             CassandraHelper.serialize(tupleEntryColumnValueValue));
+            ByteBuffer columnName = null;
+            if (columnNameType instanceof CompositeType) {
+                logger.info("CompositeType");
+                columnName = SerializerHelper.serializeComposite(tupleEntryColumnNameValues, (CompositeType)columnNameType);
+            } else {
+                logger.info("SimpleType");
+                columnName = SerializerHelper.serialize(tupleEntryColumnNameValues.get(0));
+            }
+
+            Mutation mutation = Util.createColumnPutMutation(columnName,
+                                                             SerializerHelper.serialize(tupleEntryColumnValueValue));
             mutations.add(mutation);
         }
 
         return mutations;
     }
-
-
-
 }

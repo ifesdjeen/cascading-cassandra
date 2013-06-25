@@ -6,7 +6,7 @@ import cascading.tuple.TupleEntry;
 import cascading.tuple.FieldsResolverException;
 import org.apache.cassandra.thrift.*;
 
-import com.ifesdjeen.cascading.cassandra.hadoop.CassandraHelper;
+import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 
 import java.io.IOException;
 import java.util.*;
@@ -24,46 +24,36 @@ public class StaticRowSink
     public List<Mutation> sink( Map<String, Object> settings,
                                 TupleEntry tupleEntry ) {
 
-        List<String> columnFieldNames = getSourceColumns(settings);
-        int nfields = columnFieldNames.size();
+        String rowKeyField = SettingsHelper.getMappingRowKeyField(settings);
 
-        Map<String, String> fieldMappings = (Map<String, String>) settings.get("sink.outputMappings");
-
-        String keyColumnName = (String) settings.get("sink.keyColumnName");
+        Map<String, String> sinkMappings = SettingsHelper.getSinkMappings(settings);
+        int nfields = sinkMappings.size();
 
         List<Mutation> mutations = new ArrayList<Mutation>(nfields);
 
-        for (String columnFieldName : columnFieldNames) {
-            String columnFieldMapping = fieldMappings.get(columnFieldName);
-            Object tupleEntryValue = null;
+        for (String columnName : sinkMappings.keySet()) {
+            String columnFieldMapping = sinkMappings.get(columnName);
 
-            try {
-                tupleEntryValue = tupleEntry.get(columnFieldMapping);
-            } catch (FieldsResolverException e) {
-                logger.error("Couldn't resolve field: {}", columnFieldName);
-            }
+            if (columnFieldMapping != rowKeyField) {
+                Object tupleEntryValue = null;
 
-            if (tupleEntryValue != null && columnFieldName != keyColumnName) {
-                logger.info("Column filed name {}", columnFieldName);
-                logger.info("Mapped column name {}", columnFieldMapping);
-                logger.info("Column filed value {}", tupleEntry.get(columnFieldMapping));
+                try {
+                    tupleEntryValue = tupleEntry.get(columnFieldMapping);
+                } catch (FieldsResolverException e) {
+                    throw new RuntimeException( "Couldn't resolve field: " + columnName );
+                }
 
-                Mutation mutation = Util.createColumnPutMutation(CassandraHelper.serialize(columnFieldName),
-                                                                 CassandraHelper.serialize(tupleEntry.get(columnFieldMapping)));
-                mutations.add(mutation);
+                if (tupleEntryValue != null) {
+                    logger.info("Column filed name {}", columnName);
+                    logger.info("Mapped column name {}", columnFieldMapping);
+                    logger.info("Column filed value {}", tupleEntryValue);
+
+                    Mutation mutation = Util.createColumnPutMutation(SerializerHelper.serialize(columnName),
+                                                                     SerializerHelper.serialize(tupleEntryValue));
+                    mutations.add(mutation);
+                }
             }
         }
-
         return mutations;
     }
-
-    private List<String> getSourceColumns( Map<String, Object> settings) {
-        if (settings.containsKey("source.columns")) {
-            return (List<String>) settings.get("source.columns");
-        } else {
-            return new ArrayList<String>();
-        }
-    }
-
-
 }
