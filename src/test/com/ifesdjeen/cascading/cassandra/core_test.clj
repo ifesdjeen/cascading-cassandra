@@ -86,7 +86,7 @@
                   (c/sum ?value3 :> ?sum3)
                   (c/sum ?value4 :> ?sum4))]
 
-    (fact (??- query) => [[[100 4950 9900]]])))
+    (fact query => (produces [[100 4950 9900]]))))
 
 (deftest t-cassandra-tap-as-sink
   (create-test-column-family)
@@ -138,8 +138,8 @@
                   (c/count ?count)
                   (c/sum ?value3 :> ?sum))]
     (fact "Handles simple calculations"
-          (??- query)
-          => [[[100 4950]]])))
+          query
+          => (produces [[100 4950]]))))
 
 (deftest t-cassandra-tap-as-sink-wide
   (create-test-column-family)
@@ -188,8 +188,8 @@
                   (c/sum ?value3 :> ?version-sum)
                   (c/sum ?value4 :> ?votes-sum))]
     (fact "Handles simple calculations"
-          (??- query)
-          => [[[100 500 4950]]])))
+          query
+          => (produces [[100 500 4950]]))))
 
 (deftest t-cassandra-tap-as-sink-wide-composite
   (create-test-column-family)
