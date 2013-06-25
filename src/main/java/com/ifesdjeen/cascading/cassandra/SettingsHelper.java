@@ -92,33 +92,4 @@ public class SettingsHelper {
               (settings.containsKey("mappings.rowKey") &&
                settings.containsKey("mappings.sink")));
     }
-
-    /** checks the dynamic types have rowKey, columnName and columnValue types, and
-        the dynamic mapping has rowKey, columnName and columnValue fields */
-    public static void validateDynamicMapping( Map<String, Object> settings ) {
-    }
-
-    /** checks the */
-    public static void validateStaticSourceMapping( Map<String, Object> settings ) {
-    }
-
-    /** checks the static sink mapping has */
-    public static void validateStaticSinkMapping( Map<String, Object> settings ) {
-    }
-
-    /** checks that the settings contain either a static or dynamic mapping, but not both */
-    public static void validateMapping( Map<String, Object> settings ) {
-        boolean dyn = isDynamicMapping(settings);
-        boolean stat = isStaticMapping(settings);
-
-        if (dyn && stat) {
-            throw new RuntimeException( "you can't specify both static and dynamic mappings" );
-        }
-
-        if (!dyn && !stat) {
-            throw new RuntimeException( "you must specify either static or dynamic mappings" );
-        }
-    }
-
-
 }
