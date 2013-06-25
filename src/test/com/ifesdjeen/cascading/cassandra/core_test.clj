@@ -132,14 +132,14 @@
                                           "columnValue" "Int32Type"}
                          "mappings.dynamic" {"rowKey"      "?value1"
                                              "columnName"  "?value2"
-                                             "columnValue" "?value3"}})]
+                                             "columnValue" "?value3"}})
+        query (<- [?count ?sum]
+                  (tap ?value1 ?value2 ?value3)
+                  (c/count ?count)
+                  (c/sum ?value3 :> ?sum))]
     (fact "Handles simple calculations"
-          (<-
-           [?count ?sum]
-           (tap ?value1 ?value2 ?value3)
-           (c/count ?count)
-           (c/sum ?value3 :> ?sum))
-          => (produces [[100 4950]]))))
+          (??- query)
+          => [[[100 4950]]])))
 
 (deftest t-cassandra-tap-as-sink-wide
   (create-test-column-family)
@@ -174,22 +174,22 @@
                       :version (int 5)
                       :votes (int counter)}))))
 
-  (let [tap (create-tap {"db.columnFamily" "libraries_wide"
+  (let [tap (create-tap {"db.columnFamily" "libraries_wide_composite"
 
                          "types.dynamic" {"rowKey"      "UTF8Type"
                                           "columnName"  "CompositeType(UTF8Type, Int32Type)"
                                           "columnValue" "Int32Type"}
                          "mappings.dynamic" {"rowKey"      "?value1"
                                              "columnName"  "?value2"
-                                             "columnValue" "?value3"}})]
+                                             "columnValue" "?value3"}})
+        query (<- [?count ?version-sum ?votes-sum]
+                  (tap ?value1 ?value2 ?value3 ?value4)
+                  (c/count ?count)
+                  (c/sum ?value3 :> ?version-sum)
+                  (c/sum ?value4 :> ?votes-sum))]
     (fact "Handles simple calculations"
-          (<-
-           [?count ?version-sum ?votes-sum]
-           (tap ?value1 ?value2 ?value3 ?value4)
-           (c/count ?count)
-           (c/sum ?value3 :> ?version-sum)
-           (c/sum ?value4 :> ?votes-sum))
-          => (produces [[100 500 4950]]))))
+          (??- query)
+          => [[[100 500 4950]]])))
 
 (deftest t-cassandra-tap-as-sink-wide-composite
   (create-test-column-family)
