@@ -88,6 +88,28 @@
 
     (fact query => (produces [[100 4950 9900]]))))
 
+(deftest t-cassandra-tap-as-source-different-mapping
+  (create-test-column-family)
+  (dotimes [counter 100]
+    (prepared
+     (insert :libraries
+             (values {:name (str "Cassaforte" counter)
+                      :language (str "Clojure" counter)
+                      :schmotes (int counter)
+                      :votes (int (* 2 counter))}))))
+  (let [tap (create-tap {"db.columnFamily" "libraries"
+                         "types" {"name"      "UTF8Type"
+                                  "language"  "UTF8Type"
+                                  "schmotes"  "Int32Type"
+                                  "votes"     "Int32Type"}
+                         "mappings.source" ["votes" "language"]})
+        query (<- [?count ?votes-sum]
+                  (tap ?name-field ?votes-field ?language-field)
+                  (c/count ?count)
+                  (c/sum ?votes-field :> ?votes-sum))]
+
+    (fact query => (produces [[100 9900]]))))
+
 (deftest t-cassandra-tap-as-sink
   (create-test-column-family)
   (let [test-data [["Riak" "Erlang" (int 100) (int 200)]
