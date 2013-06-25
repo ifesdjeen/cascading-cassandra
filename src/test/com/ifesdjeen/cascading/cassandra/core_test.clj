@@ -44,7 +44,7 @@
                                      :votes :int
                                      :primary-key [:name :language]}))
 
-  (create-table :libraries_composite
+  (create-table :libraries_wide_composite
                 (with {:compact-storage true})
                 (column-definitions {:name :varchar
                                      :language :varchar
@@ -168,7 +168,7 @@
   (create-test-column-family)
   (dotimes [counter 100]
     (prepared
-     (insert :libraries_composite
+     (insert :libraries_wide_composite
              (values {:name (str "Cassaforte" counter)
                       :language (str "Clojure" counter)
                       :version (int 5)
@@ -196,7 +196,7 @@
   (let [test-data [["Riak" "Erlang" (int 5) (int 100)]
                    ["Cassaforte" "Clojure" (int 1) (int 150)]]]
 
-    (?<- (create-tap {"db.columnFamily" "libraries_wide"
+    (?<- (create-tap {"db.columnFamily" "libraries_wide_composite"
 
                       "types.dynamic" {"rowKey"      "UTF8Type"
                                        "columnName"  "CompositeType(UTF8Type, Int32Type)"

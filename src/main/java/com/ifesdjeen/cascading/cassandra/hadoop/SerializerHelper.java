@@ -85,13 +85,18 @@ public class SerializerHelper {
       return stringToByteBuffer((String) obj);
     }
 
-    LOG.error("Could not serialize {}. Java reports type: {}", obj, obj.getClass().toString());
-
-    return null;
+    throw new RuntimeException( "Could not serialize" + obj.toString() + "\nJava reports type: " + obj.getClass().toString());
   }
 
     public static ByteBuffer serializeComposite(List components, CompositeType t) {
-        return null;
+
+        CompositeType.Builder builder = new CompositeType.Builder(t);
+        for(Object component : components ) {
+            ByteBuffer cbb = SerializerHelper.serialize( component );
+            builder.add( cbb );
+        }
+        ByteBuffer r = builder.build();
+        return r;
     }
 
   public static ByteBuffer bigIntegerToByteBuffer(BigInteger obj) {
