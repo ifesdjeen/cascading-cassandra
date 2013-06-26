@@ -44,6 +44,12 @@
                                      :votes :int
                                      :primary-key [:name :language]}))
 
+  (create-table :libraries_wide_empty_value
+                (with {:compact-storage true})
+                (column-definitions {:name :varchar
+                                     :votes :int
+                                     :primary-key [:name :votes]}))
+
   (create-table :libraries_wide_composite
                 (with {:compact-storage true})
                 (column-definitions {:name :varchar
@@ -51,6 +57,13 @@
                                      :version :int
                                      :votes :int
                                      :primary-key [:name :language :version]}))
+
+    (create-table :libraries_wide_composite_empty_value
+                (with {:compact-storage true})
+                (column-definitions {:name :varchar
+                                     :language :varchar
+                                     :votes :int
+                                     :primary-key [:name :language :votes]}))
   )
 
 (defn create-tap
@@ -182,6 +195,48 @@
       (is (= "Cassaforte" (:name (second res))))
       (is (= "Clojure" (:language (second res)))))))
 
+(deftest t-cassandra-tap-as-source-wide-empty-value
+  (create-test-column-family)
+  (dotimes [counter 100]
+    (prepared
+     (insert :libraries_wide_empty_value
+             (values {:name (str "Cassaforte" counter)
+                      :votes (int counter)}))))
+
+  (let [tap (create-tap {"db.columnFamily" "libraries_wide_empty_value"
+                         "types.dynamic" {"rowKey"      "UTF8Type"
+                                          "columnName"  "Int32Type"
+                                          "columnValue" nil}})
+        query (<- [?count ?sum]
+                  (tap ?value1 ?value2)
+                  (c/count ?count)
+                  (c/sum ?value2 :> ?sum))]
+    (fact "Handles simple calculations"
+      query
+      => (produces [[100 4950]]))))
+
+(deftest t-cassandra-tap-as-sink-wide-empty-value
+  (create-test-column-family)
+  (let [test-data [["Riak" (int 100)]
+                   ["Cassaforte" (int 150)]]]
+
+    (?<- (create-tap {"db.columnFamily" "libraries_wide_empty_value"
+                      "types.dynamic" {"rowKey"      "UTF8Type"
+                                       "columnName"  "Int32Type"
+                                       "columnValue" nil}
+
+                      "mappings.dynamic" {"rowKey"      "?value1"
+                                          "columnName"  "?value2"
+                                          "columnValue" nil}})
+         [?value1 ?value2]
+         (test-data ?value1 ?value2))
+
+    (let [res (select :libraries_wide_empty_value)]
+      (is (= "Riak" (:name (first res))))
+      (is (= 100 (:votes (first res))))
+      (is (= "Cassaforte" (:name (second res))))
+      (is (= 150 (:votes (second res)))))))
+
 (deftest t-cassandra-tap-as-source-wide-composite
   (create-test-column-family)
   (dotimes [counter 100]
@@ -231,3 +286,53 @@
       (is (= "Cassaforte" (:name (second res))))
       (is (= "Clojure" (:language (second res))))
       (is (= 1 (:version (second res)))))))
+
+(deftest t-cassandra-tap-as-source-wide-composite-empty-value
+  (create-test-column-family)
+  (dotimes [counter 100]
+    (prepared
+     (insert :libraries_wide_composite_empty_value
+             (values {:name (str "Cassaforte" counter)
+                      :language (str "Clojure" counter)
+                      :votes (int counter)}))))
+
+  (let [tap (create-tap {"db.columnFamily" "libraries_wide_composite_empty_value"
+
+                         "types.dynamic" {"rowKey"      "UTF8Type"
+                                          "columnName"  "CompositeType(UTF8Type, Int32Type)"
+                                          "columnValue" nil}})
+        query (<- [?count ?votes-sum]
+                  (tap ?value1 ?value2 ?value3)
+                  (c/count ?count)
+                  (c/sum ?value3 :> ?votes-sum))]
+    (fact "Handles simple calculations"
+      query
+      => (produces [[100 4950]]))))
+
+
+
+(deftest t-cassandra-tap-as-sink-wide-composite-empty-value
+  (create-test-column-family)
+  (let [test-data [["Riak" "Erlang" (int 5)]
+                   ["Cassaforte" "Clojure" (int 1)]]]
+
+    (?<- (create-tap {"db.columnFamily" "libraries_wide_composite_empty_value"
+
+                      "types.dynamic" {"rowKey"      "UTF8Type"
+                                       "columnName"  "CompositeType(UTF8Type, Int32Type)"
+                                       "columnValue" nil}
+
+                      "mappings.dynamic" {"rowKey"      "?value1"
+                                          "columnName"  ["?value2" "?value3"]
+                                          "columnValue" nil}})
+         [?value1 ?value2 ?value3]
+         (test-data ?value1 ?value2 ?value3))
+
+    (let [res (select :libraries_wide_composite_empty_value)]
+      (is (= "Riak" (:name (first res))))
+      (is (= "Erlang" (:language (first res))))
+      (is (= 5 (:votes (first res))))
+
+      (is (= "Cassaforte" (:name (second res))))
+      (is (= "Clojure" (:language (second res))))
+      (is (= 1 (:votes (second res)))))))

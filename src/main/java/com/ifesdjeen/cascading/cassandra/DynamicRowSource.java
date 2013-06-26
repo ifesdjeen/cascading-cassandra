@@ -33,7 +33,10 @@ public class DynamicRowSource
         }
 
         AbstractType columnNameType = SerializerHelper.inferType( dataTypes.get("columnName") );
-        AbstractType columnValueType = SerializerHelper.inferType( dataTypes.get( "columnValue" ) );
+        AbstractType columnValueType = null;
+        if ( dataTypes.get("columnValue") != null ) {
+            columnValueType = SerializerHelper.inferType( dataTypes.get( "columnValue" ) );
+        }
 
         for (IColumn column : columns.values()) {
 
@@ -50,8 +53,10 @@ public class DynamicRowSource
                     result.add(val);
                 }
 
-                Object colVal = SerializerHelper.deserialize(column.value(), columnValueType );
-                result.add(colVal);
+                if (columnValueType != null) {
+                    Object colVal = SerializerHelper.deserialize(column.value(), columnValueType );
+                    result.add(colVal);
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

@@ -56,12 +56,14 @@ public class DynamicRowSink
 
         String columnValueField = (String) dynamicMappings.get("columnValue");
         Object tupleEntryColumnValueValue = null;
-        try {
-            tupleEntryColumnValueValue = tupleEntry.getObject(columnValueField);
-            logger.info("column value field: {}", columnValueField);
-            logger.info("column value value: {}", tupleEntryColumnValueValue);
-        } catch (FieldsResolverException e) {
-            throw new RuntimeException("Couldn't resolve column value field: " + columnValueField);
+        if (columnValueField != null) {
+            try {
+                tupleEntryColumnValueValue = tupleEntry.getObject(columnValueField);
+                logger.info("column value field: {}", columnValueField);
+                logger.info("column value value: {}", tupleEntryColumnValueValue);
+            } catch (FieldsResolverException e) {
+                throw new RuntimeException("Couldn't resolve column value field: " + columnValueField);
+            }
         }
 
         List<Mutation> mutations = new ArrayList<Mutation>();
@@ -76,8 +78,15 @@ public class DynamicRowSink
                 columnName = SerializerHelper.serialize(tupleEntryColumnNameValues.get(0));
             }
 
-            Mutation mutation = Util.createColumnPutMutation(columnName,
-                                                             SerializerHelper.serialize(tupleEntryColumnValueValue));
+            ByteBuffer serializedColValue;
+            if (tupleEntryColumnValueValue != null ) {
+                serializedColValue = SerializerHelper.serialize(tupleEntryColumnValueValue);
+            } else {
+                byte[] emptyBytes = {};
+                serializedColValue = ByteBuffer.wrap(emptyBytes);
+            }
+
+            Mutation mutation = Util.createColumnPutMutation(columnName, serializedColValue);
             mutations.add(mutation);
         }
 
