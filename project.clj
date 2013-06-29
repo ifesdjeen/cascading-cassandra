@@ -9,7 +9,7 @@
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
   :resource-paths    ["src/resources"]
-  :profiles {:provided {:dependencies   [[org.apache.cassandra/cassandra-all "1.2.4"
+  :profiles {:provided {:dependencies   [[org.apache.cassandra/cassandra-all "1.2.5"
                                           :exclusions [org.apache.hadoop
                                                        org.apache.thrift/libthrift
                                                        org.apache.httpcomponents/httpclient]]
