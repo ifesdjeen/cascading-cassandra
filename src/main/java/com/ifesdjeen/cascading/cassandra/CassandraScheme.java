@@ -144,7 +144,7 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
 
     String rowKeyField = SettingsHelper.getMappingRowKeyField(settings);
 
-    Tuple key = tupleEntry.selectTuple(new Fields( rowKeyField ));
+    Tuple key = tupleEntry.selectTuple(new Fields(rowKeyField));
     ByteBuffer keyBuffer = SerializerHelper.serialize(key.get(0));
 
     ISink sinkImpl = getSinkImpl();
@@ -166,9 +166,9 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     ConfigHelper.setOutputInitialAddress(conf, host);
 
     if (this.settings.containsKey("cassandra.outputPartitioner")) {
-       ConfigHelper.setOutputPartitioner(conf, (String) this.settings.get("cassandra.outputPartitioner"));
+      ConfigHelper.setOutputPartitioner(conf, (String) this.settings.get("cassandra.outputPartitioner"));
     } else {
-       ConfigHelper.setOutputPartitioner(conf, "org.apache.cassandra.dht.Murmur3Partitioner");
+      ConfigHelper.setOutputPartitioner(conf, "org.apache.cassandra.dht.Murmur3Partitioner");
     }
 
     ConfigHelper.setOutputColumnFamily(conf, keyspace, columnFamily);
@@ -285,56 +285,52 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
     }
   }
 
-  private ISink getSinkImpl()
-  {
-      String className = (String)this.settings.get("sink.sinkImpl");
-      boolean useWideRows = SettingsHelper.isDynamicMapping(this.settings);
+  private ISink getSinkImpl() {
+    String className = (String) this.settings.get("sink.sinkImpl");
+    boolean useWideRows = SettingsHelper.isDynamicMapping(this.settings);
 
-      try {
-          if (className==null) {
-              if (useWideRows) {
-                  return new DynamicRowSink();
-              } else {
-                  return new StaticRowSink();
-              }
-          }
-          else {
-              Class<ISink> klass = (Class<ISink>)Class.forName(className);
-              return klass.newInstance();
-          }
-      } catch (InstantiationException e) {
-          throw new RuntimeException(e);
-      } catch (IllegalAccessException e) {
-          throw new RuntimeException(e);
-      } catch (ClassNotFoundException e) {
-          throw new RuntimeException(e);
+    try {
+      if (className == null) {
+        if (useWideRows) {
+          return new DynamicRowSink();
+        } else {
+          return new StaticRowSink();
+        }
+      } else {
+        Class<ISink> klass = (Class<ISink>) Class.forName(className);
+        return klass.newInstance();
       }
+    } catch (InstantiationException e) {
+      throw new RuntimeException(e);
+    } catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  private ISource getSourceImpl()
-  {
-      String className = (String)this.settings.get("source.sourceImpl");
-      boolean useWideRows = SettingsHelper.isDynamicMapping(this.settings);
+  private ISource getSourceImpl() {
+    String className = (String) this.settings.get("source.sourceImpl");
+    boolean useWideRows = SettingsHelper.isDynamicMapping(this.settings);
 
-      try {
-          if (className==null) {
-              if (useWideRows) {
-                  return new DynamicRowSource();
-              } else {
-                  return new StaticRowSource();
-              }
-          }
-          else {
-              Class<ISource> klass = (Class<ISource>)Class.forName(className);
-              return klass.newInstance();
-          }
-      } catch (InstantiationException e) {
-          throw new RuntimeException(e);
-      } catch (IllegalAccessException e) {
-          throw new RuntimeException(e);
-      } catch (ClassNotFoundException e) {
-          throw new RuntimeException(e);
+    try {
+      if (className == null) {
+        if (useWideRows) {
+          return new DynamicRowSource();
+        } else {
+          return new StaticRowSource();
+        }
+      } else {
+        Class<ISource> klass = (Class<ISource>) Class.forName(className);
+        return klass.newInstance();
       }
+    } catch (InstantiationException e) {
+      throw new RuntimeException(e);
+    } catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }

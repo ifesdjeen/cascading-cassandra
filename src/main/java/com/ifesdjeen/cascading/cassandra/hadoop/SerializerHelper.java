@@ -16,41 +16,41 @@ import java.util.*;
 
 public class SerializerHelper {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SerializerHelper.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SerializerHelper.class);
 
-    public static Object deserialize(ByteBuffer bb, String type) throws SyntaxException, ConfigurationException {
-        return deserialize(bb, inferType(type));
+  public static Object deserialize(ByteBuffer bb, String type) throws SyntaxException, ConfigurationException {
+    return deserialize(bb, inferType(type));
+  }
+
+  public static Object deserialize(ByteBuffer bb, AbstractType t) throws SyntaxException, ConfigurationException {
+
+    if (t instanceof CompositeType) {
+      CompositeType ct = (CompositeType) t;
+      List<AbstractType<?>> componentTypes = ct.types;
+      List<AbstractCompositeType.CompositeComponent> components = ct.deconstruct(bb);
+
+      ArrayList objs = new ArrayList();
+      for (int i = 0; i < componentTypes.size(); i++) {
+        AbstractType componentType = componentTypes.get(i);
+        Object obj = componentType.compose(components.get(i).value);
+        objs.add(obj);
+      }
+
+      return objs;
+    } else {
+      return t.compose(bb);
     }
-
-    public static Object deserialize(ByteBuffer bb, AbstractType t) throws SyntaxException, ConfigurationException {
-
-        if (t instanceof CompositeType) {
-            CompositeType ct = (CompositeType)t;
-            List<AbstractType<?>> componentTypes = ct.types;
-            List<AbstractCompositeType.CompositeComponent> components = ct.deconstruct(bb);
-
-            ArrayList objs = new ArrayList();
-            for(int i=0 ; i < componentTypes.size() ; i++) {
-                AbstractType componentType = componentTypes.get(i);
-                Object obj = componentType.compose(components.get(i).value);
-                objs.add(obj);
-            }
-
-            return objs;
-        } else {
-            return t.compose(bb);
-        }
-    }
+  }
 
   public static AbstractType inferType(String t) {
-      if (t == null) {
-          throw new RuntimeException("can't infer type from 'null'");
-      }
-      try {
-          return org.apache.cassandra.db.marshal.TypeParser.parse(t);
-      } catch (Exception e) {
-          throw new RuntimeException(e);
-      }
+    if (t == null) {
+      throw new RuntimeException("can't infer type from 'null'");
+    }
+    try {
+      return org.apache.cassandra.db.marshal.TypeParser.parse(t);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static ByteBuffer serialize(Object obj) {
@@ -88,19 +88,19 @@ public class SerializerHelper {
       return stringToByteBuffer((String) obj);
     }
 
-    throw new RuntimeException( "Could not serialize" + obj.toString() + "\nJava reports type: " + obj.getClass().toString());
+    throw new RuntimeException("Could not serialize" + obj.toString() + "\nJava reports type: " + obj.getClass().toString());
   }
 
-    public static ByteBuffer serializeComposite(List components, CompositeType t) {
+  public static ByteBuffer serializeComposite(List components, CompositeType t) {
 
-        CompositeType.Builder builder = new CompositeType.Builder(t);
-        for(Object component : components ) {
-            ByteBuffer cbb = SerializerHelper.serialize( component );
-            builder.add( cbb );
-        }
-        ByteBuffer r = builder.build();
-        return r;
+    CompositeType.Builder builder = new CompositeType.Builder(t);
+    for (Object component : components) {
+      ByteBuffer cbb = SerializerHelper.serialize(component);
+      builder.add(cbb);
     }
+    ByteBuffer r = builder.build();
+    return r;
+  }
 
   public static ByteBuffer bigIntegerToByteBuffer(BigInteger obj) {
     return ByteBuffer.wrap(obj.toByteArray());
@@ -144,7 +144,6 @@ public class SerializerHelper {
   public static ByteBuffer stringToByteBuffer(String obj) {
     return ByteBuffer.wrap(obj.getBytes());
   }
-
 
 
 }
