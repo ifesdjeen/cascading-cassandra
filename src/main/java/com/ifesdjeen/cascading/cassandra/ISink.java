@@ -8,8 +8,21 @@ import java.util.*;
 
 import java.nio.ByteBuffer;
 
-
+/**
+ * ISink is used to allow flexibility when making different types of output for Cassandra.
+ * Since data model is rich and there're several ways to interpret the way tuples are stored
+ * in C*, ISink provides a common way to write tuples.
+  */
 public interface ISink {
+
+  /**
+   * Create mutation for given `tupleEntry`
+   *
+   * @param settings - settings object passed while constructing CassandraScheme
+   * @param tupleEntry - cascading TupleEntry to be persisted
+   * @return - mutation to be applied in batch by OutputCollector
+   * @throws IOException
+   */
   List<Mutation> sink(Map<String, Object> settings,
                       TupleEntry tupleEntry) throws IOException;
 

@@ -16,14 +16,20 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 
 
+/**
+ * StaticRowSource is intended for usage with static sources, as the name suggests.
+ */
 public class StaticRowSource
         implements ISource {
 
   private static final Logger logger = LoggerFactory.getLogger(StaticRowSource.class);
 
-  public void source(Map<String, Object> settings,
+  public Tuple source(Map<String, Object> settings,
                      SortedMap<ByteBuffer, IColumn> columns,
-                     Tuple result) throws IOException {
+                     ByteBuffer key) throws IOException {
+
+    Tuple result = new Tuple();
+    result.add(ByteBufferUtil.string(key));
 
     Map<String, String> dataTypes = SettingsHelper.getTypes(settings);
     List<String> sourceMappings = SettingsHelper.getSourceMappings(settings);
@@ -56,5 +62,7 @@ public class StaticRowSource
         throw new RuntimeException("no type given for column: " + columnName);
       }
     }
+
+    return result;
   }
 }
