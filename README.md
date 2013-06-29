@@ -95,7 +95,7 @@ Jar is hosted on Clojars: https://clojars.org/com.clojurewerkz/cascading-cassand
 <dependency>
   <groupId>com.clojurewerkz</groupId>
   <artifactId>cascading-cassandra</artifactId>
-  <version>1.0.0-rc1</version>
+  <version>1.0.0-rc2</version>
 </dependency>
 ```
 
