@@ -18,50 +18,50 @@ import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 
 
 public class DynamicRowSource
-    implements ISource {
+        implements ISource {
 
-    private static final Logger logger = LoggerFactory.getLogger(DynamicRowSource.class);
+  private static final Logger logger = LoggerFactory.getLogger(DynamicRowSource.class);
 
-    public void source( Map<String, Object> settings,
-                        SortedMap<ByteBuffer, IColumn> columns,
-                        Tuple result ) throws IOException {
+  public void source(Map<String, Object> settings,
+                     SortedMap<ByteBuffer, IColumn> columns,
+                     Tuple result) throws IOException {
 
-        Map<String, String> dataTypes = SettingsHelper.getDynamicTypes(settings);
+    Map<String, String> dataTypes = SettingsHelper.getDynamicTypes(settings);
 
-        if (columns.values().isEmpty()) {
-            logger.info("Values are empty.");
+    if (columns.values().isEmpty()) {
+      logger.info("Values are empty.");
+    }
+
+    AbstractType columnNameType = SerializerHelper.inferType(dataTypes.get("columnName"));
+    AbstractType columnValueType = null;
+    if (dataTypes.get("columnValue") != null) {
+      columnValueType = SerializerHelper.inferType(dataTypes.get("columnValue"));
+    }
+
+    for (IColumn column : columns.values()) {
+
+      String columnName = ByteBufferUtil.string(column.name());
+
+      try {
+        if (columnNameType instanceof CompositeType) {
+          List components = (List) SerializerHelper.deserialize(column.name(), columnNameType);
+          for (Object component : components) {
+            result.add(component);
+          }
+        } else {
+          Object val = SerializerHelper.deserialize(column.name(), columnNameType);
+          result.add(val);
         }
 
-        AbstractType columnNameType = SerializerHelper.inferType( dataTypes.get("columnName") );
-        AbstractType columnValueType = null;
-        if ( dataTypes.get("columnValue") != null ) {
-            columnValueType = SerializerHelper.inferType( dataTypes.get( "columnValue" ) );
+        if (columnValueType != null) {
+          Object colVal = SerializerHelper.deserialize(column.value(), columnValueType);
+          result.add(colVal);
         }
-
-        for (IColumn column : columns.values()) {
-
-            String columnName = ByteBufferUtil.string(column.name());
-
-            try {
-                if (columnNameType instanceof CompositeType) {
-                    List components = (List)SerializerHelper.deserialize(column.name(), columnNameType);
-                    for(Object component : components) {
-                        result.add(component);
-                    }
-                } else {
-                    Object val = SerializerHelper.deserialize(column.name(), columnNameType);
-                    result.add(val);
-                }
-
-                if (columnValueType != null) {
-                    Object colVal = SerializerHelper.deserialize(column.value(), columnValueType );
-                    result.add(colVal);
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-        }
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
 
     }
+
+  }
 }

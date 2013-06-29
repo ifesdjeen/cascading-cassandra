@@ -12,7 +12,7 @@ import org.apache.cassandra.db.IColumn;
 
 public interface ISource {
 
-    void source( Map<String, Object> settings,
-                 SortedMap<ByteBuffer, IColumn> value,
-                 Tuple result ) throws IOException;
+  void source(Map<String, Object> settings,
+              SortedMap<ByteBuffer, IColumn> value,
+              Tuple result) throws IOException;
 }
