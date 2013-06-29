@@ -1,11 +1,11 @@
 (ns com.ifesdjeen.cascading.cassandra.core-test
-  (:require [clojurewerkz.cassaforte.embedded :as e])
+  (:require [clojurewerkz.cassaforte.embedded :as e]
+            [clojurewerkz.cassaforte.client :as client])
   (:use cascalog.api
         clojure.test
         clojurewerkz.cassaforte.cql
         cascalog.playground
         clojurewerkz.cassaforte.query
-        [clojurewerkz.cassaforte.bytes :as b]
         [midje sweet cascalog])
   (:require [cascalog.io :as io]
             [cascalog.ops :as c])
@@ -17,18 +17,24 @@
 
 (bootstrap-emacs)
 
-(declare connected?)
-(defn create-test-column-family
-  []
-  (e/start-server!)
-  (alter-var-root (var *debug-output* ) (constantly false))
-  (when (not (bound? (var *client*)))
-    (connect! ["127.0.0.1"]))
-  (drop-keyspace :cascading_cassandra)
+(declare session)
+
+(defn initialize!
+  [f]
+  (e/start-server! :cleanup true)
+  (when (not (bound? (var session)))
+    (def session (client/connect! ["127.0.0.1"]
+                                  :port 19042)))
+
+  (try
+    (drop-keyspace :cascading_cassandra)
+    (catch Exception _ nil))
+
   (create-keyspace :cascading_cassandra
                    (with {:replication
                           {:class "SimpleStrategy"
                            :replication_factor 1}}))
+
   (use-keyspace :cascading_cassandra)
   (create-table :libraries
                 (with {:compact-storage true})
@@ -64,12 +70,15 @@
                                      :language :varchar
                                      :votes :int
                                      :primary-key [:name :language :votes]}))
-  )
+
+    (f))
+
+(use-fixtures :each initialize!)
 
 (defn create-tap
   [conf]
   (let [defaults      {"db.host" "127.0.0.1"
-                       "db.port" "9160"
+                       "db.port" "19160"
                        "db.keyspace" "cascading_cassandra"
                        "db.inputPartitioner" "org.apache.cassandra.dht.Murmur3Partitioner"
                        "db.outputPartitioner" "org.apache.cassandra.dht.Murmur3Partitioner"}
@@ -79,14 +88,13 @@
 
 
 (deftest t-cassandra-tap-as-source
-  (create-test-column-family)
   (dotimes [counter 100]
-    (prepared
+    (client/prepared
      (insert :libraries
-             (values {:name (str "Cassaforte" counter)
-                      :language (str "Clojure" counter)
-                      :schmotes (int counter)
-                      :votes (int (* 2 counter))}))))
+             {:name (str "Cassaforte" counter)
+              :language (str "Clojure" counter)
+              :schmotes (int counter)
+              :votes (int (* 2 counter))})))
   (let [tap (create-tap {"db.columnFamily" "libraries"
                          "types" {"name"      "UTF8Type"
                                   "language"  "UTF8Type"
@@ -102,14 +110,13 @@
     (fact query => (produces [[100 4950 9900]]))))
 
 (deftest t-cassandra-tap-as-source-different-mapping
-  (create-test-column-family)
   (dotimes [counter 100]
-    (prepared
+    (client/prepared
      (insert :libraries
-             (values {:name (str "Cassaforte" counter)
-                      :language (str "Clojure" counter)
-                      :schmotes (int counter)
-                      :votes (int (* 2 counter))}))))
+             {:name (str "Cassaforte" counter)
+              :language (str "Clojure" counter)
+              :schmotes (int counter)
+              :votes (int (* 2 counter))})))
   (let [tap (create-tap {"db.columnFamily" "libraries"
                          "types" {"name"      "UTF8Type"
                                   "language"  "UTF8Type"
@@ -124,7 +131,6 @@
     (fact query => (produces [[100 9900]]))))
 
 (deftest t-cassandra-tap-as-sink
-  (create-test-column-family)
   (let [test-data [["Riak" "Erlang" (int 100) (int 200)]
                    ["Cassaforte" "Clojure" (int 300) (int 400)]]]
 
@@ -153,13 +159,12 @@
       (is (= 400 (:votes (second res)))))))
 
 (deftest t-cassandra-tap-as-source-wide
-  (create-test-column-family)
   (dotimes [counter 100]
-    (prepared
+    (client/prepared
      (insert :libraries_wide
-             (values {:name (str "Cassaforte" counter)
-                      :language (str "Clojure" counter)
-                      :votes (int counter)}))))
+             {:name (str "Cassaforte" counter)
+              :language (str "Clojure" counter)
+              :votes (int counter)})))
 
   (let [tap (create-tap {"db.columnFamily" "libraries_wide"
                          "types.dynamic" {"rowKey"      "UTF8Type"
@@ -174,7 +179,6 @@
           => (produces [[100 4950]]))))
 
 (deftest t-cassandra-tap-as-sink-wide
-  (create-test-column-family)
   (let [test-data [["Riak" "Erlang" (int 100)]
                    ["Cassaforte" "Clojure" (int 150)]]]
 
@@ -196,12 +200,11 @@
       (is (= "Clojure" (:language (second res)))))))
 
 (deftest t-cassandra-tap-as-source-wide-empty-value
-  (create-test-column-family)
   (dotimes [counter 100]
-    (prepared
+    (client/prepared
      (insert :libraries_wide_empty_value
-             (values {:name (str "Cassaforte" counter)
-                      :votes (int counter)}))))
+             {:name (str "Cassaforte" counter)
+              :votes (int counter)})))
 
   (let [tap (create-tap {"db.columnFamily" "libraries_wide_empty_value"
                          "types.dynamic" {"rowKey"      "UTF8Type"
@@ -216,7 +219,6 @@
       => (produces [[100 4950]]))))
 
 (deftest t-cassandra-tap-as-sink-wide-empty-value
-  (create-test-column-family)
   (let [test-data [["Riak" (int 100)]
                    ["Cassaforte" (int 150)]]]
 
@@ -238,14 +240,13 @@
       (is (= 150 (:votes (second res)))))))
 
 (deftest t-cassandra-tap-as-source-wide-composite
-  (create-test-column-family)
   (dotimes [counter 100]
-    (prepared
+    (client/prepared
      (insert :libraries_wide_composite
-             (values {:name (str "Cassaforte" counter)
-                      :language (str "Clojure" counter)
-                      :version (int 5)
-                      :votes (int counter)}))))
+             {:name (str "Cassaforte" counter)
+              :language (str "Clojure" counter)
+              :version (int 5)
+              :votes (int counter)})))
 
   (let [tap (create-tap {"db.columnFamily" "libraries_wide_composite"
 
@@ -262,7 +263,6 @@
       => (produces [[100 500 4950]]))))
 
 (deftest t-cassandra-tap-as-sink-wide-composite
-  (create-test-column-family)
   (let [test-data [["Riak" "Erlang" (int 5) (int 100)]
                    ["Cassaforte" "Clojure" (int 1) (int 150)]]]
 
@@ -288,13 +288,13 @@
       (is (= 1 (:version (second res)))))))
 
 (deftest t-cassandra-tap-as-source-wide-composite-empty-value
-  (create-test-column-family)
+
   (dotimes [counter 100]
-    (prepared
+    (client/prepared
      (insert :libraries_wide_composite_empty_value
-             (values {:name (str "Cassaforte" counter)
-                      :language (str "Clojure" counter)
-                      :votes (int counter)}))))
+             {:name (str "Cassaforte" counter)
+              :language (str "Clojure" counter)
+              :votes (int counter)})))
 
   (let [tap (create-tap {"db.columnFamily" "libraries_wide_composite_empty_value"
 
@@ -312,7 +312,6 @@
 
 
 (deftest t-cassandra-tap-as-sink-wide-composite-empty-value
-  (create-test-column-family)
   (let [test-data [["Riak" "Erlang" (int 5)]
                    ["Cassaforte" "Clojure" (int 1)]]]
 
