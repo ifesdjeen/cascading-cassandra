@@ -22,9 +22,12 @@ public class DynamicRowSource
 
   private static final Logger logger = LoggerFactory.getLogger(DynamicRowSource.class);
 
-  public void source(Map<String, Object> settings,
+  public Tuple source(Map<String, Object> settings,
                      SortedMap<ByteBuffer, IColumn> columns,
-                     Tuple result) throws IOException {
+                     ByteBuffer key) throws IOException {
+
+    Tuple result = new Tuple();
+    result.add(ByteBufferUtil.string(key));
 
     Map<String, String> dataTypes = SettingsHelper.getDynamicTypes(settings);
 
@@ -39,9 +42,6 @@ public class DynamicRowSource
     }
 
     for (IColumn column : columns.values()) {
-
-      String columnName = ByteBufferUtil.string(column.name());
-
       try {
         if (columnNameType instanceof CompositeType) {
           List components = (List) SerializerHelper.deserialize(column.name(), columnNameType);
@@ -63,5 +63,6 @@ public class DynamicRowSource
 
     }
 
+    return result;
   }
 }

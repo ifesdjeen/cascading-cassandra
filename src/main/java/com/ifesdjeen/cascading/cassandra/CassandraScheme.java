@@ -120,11 +120,8 @@ public class CassandraScheme extends Scheme<JobConf, RecordReader, OutputCollect
 
     SortedMap<ByteBuffer, IColumn> columns = (SortedMap<ByteBuffer, IColumn>) value;
 
-    Tuple result = new Tuple();
-    result.add(ByteBufferUtil.string((ByteBuffer) key));
-
     ISource sourceImpl = getSourceImpl();
-    sourceImpl.source(this.settings, columns, result);
+    Tuple result = sourceImpl.source(this.settings, columns, (ByteBuffer) key);
 
     sourceCall.getIncomingEntry().setTuple(result);
     return true;
