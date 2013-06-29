@@ -1,10 +1,19 @@
 # Cascading Tap for Cassandra
+
 [![Build Status](https://secure.travis-ci.org/ifesdjeen/cascading-cassandra.png)](http://travis-ci.org/ifesdjeen/cascading-cassandra)
 
 This is a Cassandra Tap that can be used as a sink and source. Works
 with the latest version of Cassandra and Cascading (2.0), is tested,
 well-maintained. It's working fine for us, but use it at your own
 risk.
+
+If you're new to Cassandra, check out our [Cassandra Guides](http://clojurecassandra.info/articles/guides.html),
+They were initially written for [Cassaforte](https://github.com/clojurewerkz/cassaforte), Clojure Cassandra
+driver, but are generic enough and go in elaborate details on all Cassandra-related topics, such as
+[Consistency/Availability](http://clojurecassandra.info/articles/cassandra_concepts.html), [Data Modelling](http://clojurecassandra.info/articles/data_modelling.html),
+[Command Line Tools](http://clojurecassandra.info/articles/troubleshooting.html#toc_2), [Timestamps](http://clojurecassandra.info/articles/kv.html#toc_3),
+[Counters](http://clojurecassandra.info/articles/kv.html#toc_5) and many many more.
+
 
 # Usage
 
