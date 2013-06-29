@@ -98,6 +98,11 @@ Jar is hosted on Clojars: https://clojars.org/com.clojurewerkz/cascading-cassand
   <version>1.0.0-rc1</version>
 </dependency>
 ```
+
+# This project supports the ClojureWerkz goals
+
+[ClojureWerkz](http://clojurewerkz.org/) is a growing collection of open-source, **batteries-included Clojure libraries** that emphasise modern targets, great documentation, and thorough testing. They've got a ton of great stuff, check 'em out!
+
 # License
 
 Copyright (C) 2011-2013 Alex Petrov
