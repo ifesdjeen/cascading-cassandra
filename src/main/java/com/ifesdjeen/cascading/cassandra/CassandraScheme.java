@@ -24,7 +24,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat;
 import org.apache.cassandra.hadoop.ConfigHelper;
 
-import com.ifesdjeen.cascading.cassandra.hadoop.ColumnFamilyInputFormat;
+import org.apache.cassandra.hadoop.ColumnFamilyInputFormat;
 import com.ifesdjeen.cascading.cassandra.hadoop.CassandraHelper;
 
 import java.io.IOException;
