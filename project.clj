@@ -1,4 +1,4 @@
-(defproject cascading-cassandra "1.0.0-rc2"
+(defproject cascading-cassandra "1.0.0-rc3-SNAPSHOT"
   :description ""
   :min-lein-version "2.0.0"
   :license {:name "Apache License 2.0"}
