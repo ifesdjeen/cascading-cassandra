@@ -48,7 +48,10 @@ public class StaticRowSource
       if (columnValueType != null) {
         try {
           IColumn column = columnsByStringName.get(columnName);
-          ByteBuffer serializedVal = column.value();
+          ByteBuffer serializedVal = null;
+          if (column != null) {
+              serializedVal = column.value();
+          }
           Object val = null;
           if (serializedVal != null) {
             val = SerializerHelper.deserialize(serializedVal, columnValueType);
