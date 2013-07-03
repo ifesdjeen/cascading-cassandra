@@ -44,9 +44,9 @@ public class StaticRowSink
         }
 
         if (tupleEntryValue != null) {
-          logger.info("Column filed name {}", columnName);
-          logger.info("Mapped column name {}", columnFieldMapping);
-          logger.info("Column filed value {}", tupleEntryValue);
+          logger.debug("Column filed name {}", columnName);
+          logger.debug("Mapped column name {}", columnFieldMapping);
+          logger.debug("Column filed value {}", tupleEntryValue);
 
           Mutation mutation = Util.createColumnPutMutation(SerializerHelper.serialize(columnName),
                   SerializerHelper.serialize(tupleEntryValue));

@@ -46,8 +46,8 @@ public class DynamicRowSink
     for (String columnNameField : columnNameFields) {
       try {
         Object columnNameValue = tupleEntry.getObject(columnNameField);
-        logger.info("column name component field: {}", columnNameField);
-        logger.info("column name component value: {}", columnNameValue);
+        logger.debug("column name component field: {}", columnNameField);
+        logger.debug("column name component value: {}", columnNameValue);
         tupleEntryColumnNameValues.add(columnNameValue);
       } catch (FieldsResolverException e) {
         throw new RuntimeException("Couldn't resolve column name field: " + columnNameField);
@@ -59,10 +59,10 @@ public class DynamicRowSink
     if (columnValueField != null) {
       try {
         tupleEntryColumnValueValue = tupleEntry.getObject(columnValueField);
-        logger.info("column value field: {}", columnValueField);
-        logger.info("column value value: {}", tupleEntryColumnValueValue);
+        logger.debug("column value field: {}", columnValueField);
+        logger.debug("column value value: {}", tupleEntryColumnValueValue);
       } catch (FieldsResolverException e) {
-        throw new RuntimeException("Couldn't resolve column value field: " + columnValueField);
+        throw new RuntimeException("Couldn't resolve column value fielsd: " + columnValueField);
       }
     }
 
@@ -71,10 +71,10 @@ public class DynamicRowSink
 
       ByteBuffer columnName = null;
       if (columnNameType instanceof CompositeType) {
-        logger.info("CompositeType");
+        logger.debug("CompositeType");
         columnName = SerializerHelper.serializeComposite(tupleEntryColumnNameValues, (CompositeType) columnNameType);
       } else {
-        logger.info("SimpleType");
+        logger.debug("SimpleType");
         columnName = SerializerHelper.serialize(tupleEntryColumnNameValues.get(0));
       }
 

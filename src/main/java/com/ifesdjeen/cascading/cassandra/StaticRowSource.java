@@ -37,9 +37,9 @@ public class StaticRowSource
     Map<String, IColumn> columnsByStringName = new HashMap<String, IColumn>();
     for (ByteBuffer columnName : columns.keySet()) {
       String stringName = ByteBufferUtil.string(columnName);
-      logger.info("column name: {}", stringName);
+      logger.debug("column name: {}", stringName);
       IColumn col = columns.get(columnName);
-      logger.info("column: {}", col);
+      logger.debug("column: {}", col);
       columnsByStringName.put(stringName, col);
     }
 
@@ -56,7 +56,7 @@ public class StaticRowSource
           if (serializedVal != null) {
             val = SerializerHelper.deserialize(serializedVal, columnValueType);
           }
-          logger.info("Putting deserialized column: {}. {}", columnName, val);
+          logger.debug("Putting deserialized column: {}. {}", columnName, val);
           result.add(val);
         } catch (Exception e) {
           throw new RuntimeException("Couldn't deserialize column: " + columnName, e);
