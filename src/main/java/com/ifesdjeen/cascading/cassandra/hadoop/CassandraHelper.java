@@ -66,7 +66,8 @@ public class CassandraHelper {
     } catch (TTransportException e) {
       throw new IOException("unable to connect to server", e);
     }
-    return new Cassandra.Client(new TBinaryProtocol(trans));
+
+    return new Cassandra.Client(new TBinaryProtocol(trans, false, true));
   }
 
 
