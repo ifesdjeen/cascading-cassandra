@@ -1,4 +1,4 @@
-(defproject cascading-cassandra "1.0.0-rc3-SNAPSHOT"
+(defproject cascading-cassandra "1.0.0-rc3"
   :description ""
   :min-lein-version "2.0.0"
   :license {:name "Apache License 2.0"}
@@ -6,6 +6,8 @@
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [cascalog "1.10.1"]]
   :aot               [com.ifesdjeen.cascading.cassandra.core-test]
+  :plugins [[lein-idea "1.0.1"]]
+  :javac-options ["-target" "1.6" "-source" "1.6" "-Xlint:-options"]
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
   :resource-paths    ["src/resources"]
