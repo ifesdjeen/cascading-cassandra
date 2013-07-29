@@ -70,7 +70,7 @@ public class CassandraCollector extends TupleEntrySchemeCollector implements Out
       writer.close(reporter);
     } catch (IOException exception) {
       LOG.warn("exception closing: {}", exception);
-      throw new TapException("exception closing JDBCTapCollector", exception);
+      throw new TapException("exception closing CassandraCollector", exception);
     } finally {
       super.close();
     }

@@ -21,9 +21,9 @@ public class CassandraTap extends Tap<JobConf, RecordReader, OutputCollector> {
 
   public final String id = "TEMP_ID";
 
-  public CassandraScheme scheme;
+  public BaseCassandraScheme scheme;
 
-  public CassandraTap(CassandraScheme scheme) {
+  public CassandraTap(BaseCassandraScheme scheme) {
     super(scheme);
     this.scheme = scheme;
   }

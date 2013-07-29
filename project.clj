@@ -26,7 +26,7 @@
                                          "-javaagent:lib/jamm-0.2.5.jar"
                                          "-Xmx768m"]
                         :dependencies   [[org.xerial.snappy/snappy-java "1.0.5-M3"]
-                                         [clojurewerkz/cassaforte "1.0.0-rc6-SNAPSHOT"
+                                         [clojurewerkz/cassaforte "1.1.0"
                                           :exclusions [org.apache.thrift/libthrift]]
                                          [commons-lang/commons-lang "2.6"]]}}
   :test-selectors {:all     (constantly true)
