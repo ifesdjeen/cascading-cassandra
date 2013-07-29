@@ -1,13 +1,12 @@
 (ns com.ifesdjeen.cascading.cassandra.core-test
-  (:require [clojurewerkz.cassaforte.embedded :as e]
-            [clojurewerkz.cassaforte.client :as client])
+  (:require [clojurewerkz.cassaforte.client :as client])
   (:use cascalog.api
         clojure.test
         clojurewerkz.cassaforte.cql
-        cascalog.playground
         clojurewerkz.cassaforte.query
         [midje sweet cascalog])
-  (:require [cascalog.io :as io]
+  (:require [com.ifesdjeen.cascading.cassandra.test-helpers :as th]
+            [cascalog.io :as io]
             [cascalog.ops :as c])
   (:import [cascading.tuple Fields]
            [cascading.scheme Scheme]
@@ -15,65 +14,7 @@
            [org.apache.cassandra.utils ByteBufferUtil]
            [org.apache.cassandra.thrift Column]))
 
-(bootstrap-emacs)
-
-(declare session)
-
-(defn initialize!
-  [f]
-  (e/start-server! :cleanup true)
-  (when (not (bound? (var session)))
-    (def session (client/connect! ["127.0.0.1"]
-                                  :port 19042)))
-
-  (try
-    (drop-keyspace :cascading_cassandra)
-    (catch Exception _ nil))
-
-  (create-keyspace :cascading_cassandra
-                   (with {:replication
-                          {:class "SimpleStrategy"
-                           :replication_factor 1}}))
-
-  (use-keyspace :cascading_cassandra)
-  (create-table :libraries
-                (with {:compact-storage true})
-                (column-definitions {:name :varchar
-                                     :language :varchar
-                                     :schmotes :int
-                                     :votes :int
-                                     :primary-key [:name]}))
-  (create-table :libraries_wide
-                (with {:compact-storage true})
-                (column-definitions {:name :varchar
-                                     :language :varchar
-                                     :votes :int
-                                     :primary-key [:name :language]}))
-
-  (create-table :libraries_wide_empty_value
-                (with {:compact-storage true})
-                (column-definitions {:name :varchar
-                                     :votes :int
-                                     :primary-key [:name :votes]}))
-
-  (create-table :libraries_wide_composite
-                (with {:compact-storage true})
-                (column-definitions {:name :varchar
-                                     :language :varchar
-                                     :version :int
-                                     :votes :int
-                                     :primary-key [:name :language :version]}))
-
-    (create-table :libraries_wide_composite_empty_value
-                (with {:compact-storage true})
-                (column-definitions {:name :varchar
-                                     :language :varchar
-                                     :votes :int
-                                     :primary-key [:name :language :votes]}))
-
-    (f))
-
-(use-fixtures :each initialize!)
+(use-fixtures :each th/initialize!)
 
 (defn create-tap
   [conf]

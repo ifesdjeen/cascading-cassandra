@@ -49,7 +49,6 @@ public class CassandraScheme extends BaseCassandraScheme {
     super.sourceConfInit(process, tap, conf);
 
     conf.setInputFormat(ColumnFamilyInputFormat.class);
-    conf.setOutputFormat(ColumnFamilyOutputFormat.class);
 
     ConfigHelper.setRangeBatchSize(conf, 1000);
 
