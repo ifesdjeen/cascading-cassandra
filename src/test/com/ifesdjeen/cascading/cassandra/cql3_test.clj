@@ -48,3 +48,28 @@
                   (c/sum ?value4 :> ?sum4))]
 
     (fact query => (produces [[100 4950 9900]]))))
+
+(deftest t-cassandra-tap-as-source-with-where-statement
+  (create-index :libraries_cql_3 :schmotes)
+  (dotimes [counter 100]
+    (client/prepared
+     (insert :libraries_cql_3
+             {:name (str "Cassaforte" counter)
+              :language (str "Clojure" counter)
+              :schmotes (int counter)
+              :votes (int (* 2 counter))})))
+
+  (let [tap (create-tap {"db.columnFamily" "libraries_cql_3"
+                         "source.whereClauses" "schmotes = 50"
+                         "source.CQLPageRowSize" "50"
+                         "types" {"name"      "UTF8Type"
+                                  "language"  "UTF8Type"
+                                  "schmotes"  "Int32Type"
+                                  "votes"     "Int32Type"}})
+        query (<- [?count ?sum3 ?sum4]
+                  (tap ?value1 ?value2 ?value3 ?value4)
+                  (c/count ?count)
+                  (c/sum ?value3 :> ?sum3)
+                  (c/sum ?value4 :> ?sum4))]
+
+    (fact query => (produces [[1 50 100]]))))

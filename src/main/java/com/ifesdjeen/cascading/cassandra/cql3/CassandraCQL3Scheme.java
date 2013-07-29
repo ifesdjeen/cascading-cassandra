@@ -38,7 +38,15 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
     ConfigHelper.setInputColumnFamily(conf, this.keyspace, this.columnFamily);
     conf.setInputFormat(CqlPagingInputFormat.class);
 
-    CqlConfigHelper.setInputCQLPageRowSize(conf, "3");
+    if (this.settings.containsKey("source.CQLPageRowSize")) {
+      CqlConfigHelper.setInputCQLPageRowSize(conf, (String) this.settings.get("source.CQLPageRowSize"));
+    } else {
+      CqlConfigHelper.setInputCQLPageRowSize(conf, "100");
+    }
+
+    if (this.settings.containsKey("source.whereClauses")) {
+      CqlConfigHelper.setInputWhereClauses(conf, (String) this.settings.get("source.whereClauses"));
+    }
 
     conf.set("row_key", "name");
   }
