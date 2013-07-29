@@ -54,6 +54,12 @@ public abstract class BaseCassandraScheme extends Scheme<JobConf, RecordReader, 
   }
 
   /**
+   *
+   * Source Methods
+   *
+   */
+
+  /**
    * @param flowProcess
    * @param sourceCall
    */
@@ -108,13 +114,22 @@ public abstract class BaseCassandraScheme extends Scheme<JobConf, RecordReader, 
     sourceCall.setContext(null);
   }
 
+  /**
+   *
+   * Sink Methods
+   *
+   */
 
+  /**
+   *
+   * @param process
+   * @param tap
+   * @param conf
+   */
   @Override
   public void sinkConfInit(FlowProcess<JobConf> process,
                            Tap<JobConf, RecordReader, OutputCollector> tap,
                            JobConf conf) {
-    conf.setOutputFormat(ColumnFamilyOutputFormat.class);
-
     ConfigHelper.setRangeBatchSize(conf, 1000);
 
     ConfigHelper.setOutputRpcPort(conf, port);
@@ -130,6 +145,12 @@ public abstract class BaseCassandraScheme extends Scheme<JobConf, RecordReader, 
 
     FileOutputFormat.setOutputPath(conf, getPath());
   }
+
+  /**
+   *
+   * Generic Methods
+   *
+   */
 
   public Path getPath() {
     return new Path(pathUUID);

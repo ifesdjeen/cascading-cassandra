@@ -12,13 +12,14 @@
 
 (defn initialize!
   [f]
-  (e/start-server! :cleanup true)
+   (e/start-server! :cleanup true)
   (when (not (bound? (var session)))
     ;; (def session (client/connect! ["192.168.60.15"]
     ;;                               :port 9042))
 
     (def session (client/connect! ["127.0.0.1"]
-                                  :port 19042)))
+                                  :port 19042))
+    )
 
   (try
     (drop-keyspace :cascading_cassandra)

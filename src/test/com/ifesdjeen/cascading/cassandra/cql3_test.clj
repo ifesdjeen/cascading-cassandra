@@ -28,7 +28,29 @@
         tap           (CassandraTap. scheme)]
     tap))
 
-(deftest t-cassandra-tap-as-source
+(deftest t-tap-as-source-compact-storage
+  (dotimes [counter 100]
+    (client/prepared
+     (insert :libraries
+             {:name (str "Cassaforte" counter)
+              :language (str "Clojure" counter)
+              :schmotes (int counter)
+              :votes (int (* 2 counter))})))
+  (let [tap (create-tap {"db.columnFamily" "libraries"
+                         "types" {"name"      "UTF8Type"
+                                  "language"  "UTF8Type"
+                                  "schmotes"  "Int32Type"
+                                  "votes"     "Int32Type"}
+                         "mappings.source" ["language" "schmotes" "votes"]})
+        query (<- [?count ?sum3 ?sum4]
+                  (tap ?value1 ?value2 ?value3 ?value4)
+                  (c/count ?count)
+                  (c/sum ?value3 :> ?sum3)
+                  (c/sum ?value4 :> ?sum4))]
+
+    (fact query => (produces [[100 4950 9900]]))))
+
+(deftest t-tap-as-source-normal
   (dotimes [counter 100]
     (client/prepared
      (insert :libraries_cql_3
@@ -73,3 +95,43 @@
                   (c/sum ?value4 :> ?sum4))]
 
     (fact query => (produces [[1 50 100]]))))
+
+(deftest t-cassandra-tap-as-sink-compact-sorage
+  (let [test-data [["Riak" "Erlang" (int 100)]
+                   ["Cassaforte" "Clojure" (int 150)]]]
+
+    (?<- (create-tap {"db.columnFamily" "libraries"
+                      "sink.outputCQL" "UPDATE libraries SET votes = ?, language = ?"
+                      "mappings.cqlKeys" ["name"]
+                      "mappings.cqlValues" ["votes" "language"]
+                      "mappings.cql" {"name"     "?value1"
+                                      "language" "?value2"
+                                      "votes"    "?value3" }})
+         [?value1 ?value2 ?value3]
+         (test-data ?value1 ?value2 ?value3))
+
+    (let [res (select :libraries)]
+      (is (= "Riak" (:name (first res))))
+      (is (= "Erlang" (:language (first res))))
+      (is (= "Cassaforte" (:name (second res))))
+      (is (= "Clojure" (:language (second res)))))))
+
+(deftest t-cassandra-tap-as-sink-normal
+  (let [test-data [["Riak" "Erlang" (int 100)]
+                   ["Cassaforte" "Clojure" (int 150)]]]
+
+    (?<- (create-tap {"db.columnFamily" "libraries_cql_3"
+                      "sink.outputCQL" "UPDATE libraries_cql_3 SET votes = ?, language = ?"
+                      "mappings.cqlKeys" ["name"]
+                      "mappings.cqlValues" ["votes" "language"]
+                      "mappings.cql" {"name"     "?value1"
+                                      "language" "?value2"
+                                      "votes"    "?value3" }})
+         [?value1 ?value2 ?value3]
+         (test-data ?value1 ?value2 ?value3))
+
+    (let [res (select :libraries_cql_3)]
+      (is (= "Riak" (:name (first res))))
+      (is (= "Erlang" (:language (first res))))
+      (is (= "Cassaforte" (:name (second res))))
+      (is (= "Clojure" (:language (second res)))))))

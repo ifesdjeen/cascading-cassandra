@@ -1,14 +1,11 @@
 package com.ifesdjeen.cascading.cassandra;
 
 import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
-import org.apache.cassandra.exceptions.SyntaxException;
-import cascading.tuple.FieldsResolverException;
-import org.apache.cassandra.db.ColumnSerializer;
+import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat;
 import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
 import cascading.flow.FlowProcess;
-import cascading.scheme.Scheme;
 import cascading.scheme.SinkCall;
 import cascading.scheme.SourceCall;
 
@@ -19,21 +16,14 @@ import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.mapred.*;
-import org.apache.hadoop.fs.Path;
 
-import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat;
 import org.apache.cassandra.hadoop.ConfigHelper;
 
 import org.apache.cassandra.hadoop.ColumnFamilyInputFormat;
-import com.ifesdjeen.cascading.cassandra.hadoop.CassandraHelper;
 
 import java.io.IOException;
 import java.util.*;
 import java.nio.ByteBuffer;
-
-import org.apache.log4j.Level;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.db.IColumn;
 
@@ -43,6 +33,18 @@ public class CassandraScheme extends BaseCassandraScheme {
     super(settings);
   }
 
+  /**
+   *
+   * Source Methods
+   *
+   */
+
+  /**
+   *
+   * @param process
+   * @param tap
+   * @param conf
+   */
   @Override
   public void sourceConfInit(FlowProcess<JobConf> process,
                              Tap<JobConf, RecordReader, OutputCollector> tap, JobConf conf) {
@@ -126,6 +128,26 @@ public class CassandraScheme extends BaseCassandraScheme {
     } else {
       return new ArrayList<String>();
     }
+  }
+
+  /**
+   *
+   * Sink Methods
+   *
+   */
+
+  /**
+   *
+   * @param process
+   * @param tap
+   * @param conf
+   */
+  @Override
+  public void sinkConfInit(FlowProcess<JobConf> process,
+                           Tap<JobConf, RecordReader, OutputCollector> tap,
+                           JobConf conf) {
+    super.sinkConfInit(process, tap, conf);
+    conf.setOutputFormat(ColumnFamilyOutputFormat.class);
   }
 
   /**

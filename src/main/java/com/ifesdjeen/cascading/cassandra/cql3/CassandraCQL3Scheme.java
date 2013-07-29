@@ -5,10 +5,12 @@ import cascading.scheme.SinkCall;
 import cascading.scheme.SourceCall;
 import cascading.tap.Tap;
 import cascading.tuple.Tuple;
+import cascading.tuple.TupleEntry;
 import com.ifesdjeen.cascading.cassandra.BaseCassandraScheme;
 import com.ifesdjeen.cascading.cassandra.SettingsHelper;
 import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 import org.apache.cassandra.db.IColumn;
+import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat;
 import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.cassandra.hadoop.cql3.CqlConfigHelper;
 import org.apache.cassandra.hadoop.cql3.CqlOutputFormat;
@@ -17,11 +19,11 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
+import org.jsoup.helper.StringUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.SortedMap;
+import java.util.*;
 
 public class CassandraCQL3Scheme extends BaseCassandraScheme {
 
@@ -29,6 +31,18 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
     super(settings);
   }
 
+  /**
+   *
+   * Source Methods
+   *
+   */
+
+  /**
+   *
+   * @param process
+   * @param tap
+   * @param conf
+   */
   @Override
   public void sourceConfInit(FlowProcess<JobConf> process,
                              Tap<JobConf, RecordReader, OutputCollector> tap,
@@ -93,7 +107,8 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
 
     for(Map.Entry<String, ByteBuffer> key : keys.entrySet()) {
       try {
-        result.add(SerializerHelper.deserialize(key.getValue(), SerializerHelper.inferType(dataTypes.get(key.getKey()))));
+        result.add(SerializerHelper.deserialize(key.getValue(),
+                SerializerHelper.inferType(dataTypes.get(key.getKey()))));
       } catch (Exception e) {
         throw new RuntimeException("Couldn't deserialize key: " + key.getKey(), e);
       }
@@ -101,7 +116,8 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
 
     for(Map.Entry<String, ByteBuffer> column : columns.entrySet()) {
       try {
-        result.add(SerializerHelper.deserialize(column.getValue(), SerializerHelper.inferType(dataTypes.get(column.getKey()))));
+        result.add(SerializerHelper.deserialize(column.getValue(),
+                SerializerHelper.inferType(dataTypes.get(column.getKey()))));
       } catch (Exception e) {
         throw new RuntimeException("Couldn't deserialize value for: " + column.getKey(), e);
       }
@@ -113,12 +129,67 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
 
   /**
    *
+   * Sink Methods
+   *
+   */
+
+  /**
+   *
+   * @param process
+   * @param tap
+   * @param conf
+   */
+  @Override
+  public void sinkConfInit(FlowProcess<JobConf> process,
+                           Tap<JobConf, RecordReader, OutputCollector> tap,
+                           JobConf conf) {
+    super.sinkConfInit(process, tap, conf);
+    conf.setOutputFormat(CqlOutputFormat.class);
+
+    if (this.settings.containsKey("mappings.cqlKeys")) {
+      List<String> keyMappings = (List<String>) this.settings.get("mappings.cqlKeys");
+      conf.set("row_key", StringUtil.join(keyMappings, ","));
+    } else {
+      throw new RuntimeException("Can't sink without 'mappings.cqlKeys'");
+    }
+
+
+    if (this.settings.containsKey("sink.outputCQL")) {
+      CqlConfigHelper.setOutputCql(conf, (String) this.settings.get("sink.outputCQL"));
+    } else {
+      throw new RuntimeException("Can't sink without 'sink.outputCQL'");
+    }
+  }
+
+  /**
+   *
    * @param flowProcess
    * @param sinkCall
    * @throws IOException
    */
   public void sink(FlowProcess<JobConf> flowProcess,
                    SinkCall<Object[], OutputCollector> sinkCall) throws IOException {
+    TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
+    OutputCollector outputCollector = sinkCall.getOutput();
 
+    List<String> cqlKeys = (List<String>) this.settings.get("mappings.cqlKeys");
+    List<String> cqlValues = (List<String>) this.settings.get("mappings.cqlValues");
+    Map<String, String> columnMappings = (Map<String, String>) this.settings.get("mappings.cql");
+
+    Map<String, ByteBuffer> keys = new LinkedHashMap<String, ByteBuffer>();
+    List<ByteBuffer> values = new ArrayList<ByteBuffer>();
+
+    for (String key: cqlKeys) {
+      keys.put(key, SerializerHelper.serialize(tupleEntry.getObject(columnMappings.get(key))));
+    }
+
+    // Unfortunately we can't just use hashmap because of order-dependent CQL queries. OP
+    for (String value: cqlValues) {
+      values.add(SerializerHelper.serialize(tupleEntry.getObject(columnMappings.get(value))));
+    }
+
+    logger.debug("Keys {}", keys);
+
+    outputCollector.collect(keys, values);
   }
 }
