@@ -25,8 +25,10 @@ public class StaticRowSource extends BaseThriftSource implements ISource {
   private static final Logger logger = LoggerFactory.getLogger(StaticRowSource.class);
 
   public Tuple source(Map<String, Object> settings,
-                     SortedMap<ByteBuffer, IColumn> columns,
-                     ByteBuffer key) throws IOException {
+                      Object boxedKey,
+                      Object boxedColumns) throws IOException {
+    SortedMap<ByteBuffer, IColumn> columns = (SortedMap<ByteBuffer, IColumn>) boxedColumns;
+    ByteBuffer key = (ByteBuffer) boxedKey;
 
     Tuple result = new Tuple();
     result.add(ByteBufferUtil.string(key));

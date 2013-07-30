@@ -2,6 +2,7 @@ package com.ifesdjeen.cascading.cassandra.sinks;
 
 import cascading.tuple.TupleEntry;
 import org.apache.cassandra.thrift.*;
+import org.apache.hadoop.mapred.OutputCollector;
 
 import java.io.IOException;
 import java.util.*;
@@ -23,8 +24,8 @@ public interface ISink {
    * @return - mutation to be applied in batch by OutputCollector
    * @throws IOException
    */
-  List<Mutation> sink(Map<String, Object> settings,
-                      TupleEntry tupleEntry) throws IOException;
+  void sink(Map<String, Object> settings, TupleEntry tupleEntry, OutputCollector outputCollector)
+          throws IOException;
 
   public static class Util {
 

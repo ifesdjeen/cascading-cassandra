@@ -1,5 +1,7 @@
 package com.ifesdjeen.cascading.cassandra.sinks;
 
+import cascading.tuple.Fields;
+import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import cascading.tuple.FieldsResolverException;
 
@@ -15,16 +17,21 @@ import java.io.IOException;
 import java.util.*;
 import java.nio.ByteBuffer;
 
+import org.apache.hadoop.mapred.OutputCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DynamicRowSink
-        implements ISink {
+public class DynamicRowSink implements ISink {
 
   private static final Logger logger = LoggerFactory.getLogger(DynamicRowSink.class);
 
-  public List<Mutation> sink(Map<String, Object> settings,
-                             TupleEntry tupleEntry) throws IOException {
+  public void sink(Map<String, Object> settings, TupleEntry tupleEntry, OutputCollector outputCollector)
+          throws IOException {
+
+    String rowKeyField = SettingsHelper.getMappingRowKeyField(settings);
+
+    Tuple key = tupleEntry.selectTuple(new Fields(rowKeyField));
+    ByteBuffer keyBuffer = SerializerHelper.serialize(key.get(0));
 
     Map<String, String> dataTypes = SettingsHelper.getDynamicTypes(settings);
     Map<String, String> dynamicMappings = SettingsHelper.getDynamicMappings(settings);
@@ -87,6 +94,6 @@ public class DynamicRowSink
       mutations.add(mutation);
     }
 
-    return mutations;
+    outputCollector.collect(keyBuffer, mutations);
   }
 }

@@ -9,6 +9,10 @@ import cascading.tuple.TupleEntry;
 import com.ifesdjeen.cascading.cassandra.BaseCassandraScheme;
 import com.ifesdjeen.cascading.cassandra.SettingsHelper;
 import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
+import com.ifesdjeen.cascading.cassandra.sinks.CqlSink;
+import com.ifesdjeen.cascading.cassandra.sinks.ISink;
+import com.ifesdjeen.cascading.cassandra.sources.CqlSource;
+import com.ifesdjeen.cascading.cassandra.sources.ISource;
 import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.cassandra.hadoop.cql3.CqlConfigHelper;
 import org.apache.cassandra.hadoop.cql3.CqlOutputFormat;
@@ -70,12 +74,8 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
   @Override
   public void sourcePrepare(FlowProcess<JobConf> flowProcess,
                             SourceCall<Object[], RecordReader> sourceCall) {
-    Map<String,ByteBuffer> key = (Map<String, ByteBuffer>) sourceCall.getInput().createKey();
-    Map<String,ByteBuffer> value = (Map<String, ByteBuffer>) sourceCall.getInput().createValue();
-
-    Object[] obj = new Object[]{key, value};
-
-    sourceCall.setContext(obj);
+    ISource sourceImpl = new CqlSource();
+    sourceImpl.sourcePrepare(sourceCall);
   }
 
   /**
@@ -88,13 +88,10 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
   @Override
   public boolean source(FlowProcess<JobConf> flowProcess,
                         SourceCall<Object[], RecordReader> sourceCall) throws IOException {
-    Tuple result = new Tuple();
-
     RecordReader input = sourceCall.getInput();
 
-    Map<String, String> dataTypes = SettingsHelper.getTypes(settings);
-    Map<String,ByteBuffer> keys = (Map<String, ByteBuffer>) sourceCall.getContext()[0];
-    Map<String,ByteBuffer> columns = (Map<String, ByteBuffer>) sourceCall.getContext()[1];
+    Object keys = sourceCall.getContext()[0];
+    Object columns = sourceCall.getContext()[1];
 
     boolean hasNext = input.next(keys, columns);
 
@@ -102,25 +99,10 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
       return false;
     }
 
-    for(Map.Entry<String, ByteBuffer> key : keys.entrySet()) {
-      try {
-        result.add(SerializerHelper.deserialize(key.getValue(),
-                SerializerHelper.inferType(dataTypes.get(key.getKey()))));
-      } catch (Exception e) {
-        throw new RuntimeException("Couldn't deserialize key: " + key.getKey(), e);
-      }
-    }
-
-    for(Map.Entry<String, ByteBuffer> column : columns.entrySet()) {
-      try {
-        result.add(SerializerHelper.deserialize(column.getValue(),
-                SerializerHelper.inferType(dataTypes.get(column.getKey()))));
-      } catch (Exception e) {
-        throw new RuntimeException("Couldn't deserialize value for: " + column.getKey(), e);
-      }
-    }
-
+    ISource sourceImpl = new CqlSource();
+    Tuple result = sourceImpl.source(this.settings, keys, columns);
     sourceCall.getIncomingEntry().setTuple(result);
+
     return true;
   }
 
@@ -169,24 +151,7 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
     TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
     OutputCollector outputCollector = sinkCall.getOutput();
 
-    List<String> cqlKeys = (List<String>) this.settings.get("mappings.cqlKeys");
-    List<String> cqlValues = (List<String>) this.settings.get("mappings.cqlValues");
-    Map<String, String> columnMappings = (Map<String, String>) this.settings.get("mappings.cql");
-
-    Map<String, ByteBuffer> keys = new LinkedHashMap<String, ByteBuffer>();
-    List<ByteBuffer> values = new ArrayList<ByteBuffer>();
-
-    for (String key: cqlKeys) {
-      keys.put(key, SerializerHelper.serialize(tupleEntry.getObject(columnMappings.get(key))));
-    }
-
-    // Unfortunately we can't just use hashmap because of order-dependent CQL queries. OP
-    for (String value: cqlValues) {
-      values.add(SerializerHelper.serialize(tupleEntry.getObject(columnMappings.get(value))));
-    }
-
-    logger.debug("Keys {}", keys);
-
-    outputCollector.collect(keys, values);
+    ISink sinkImpl = new CqlSink();
+    sinkImpl.sink(this.settings, tupleEntry, outputCollector);
   }
 }

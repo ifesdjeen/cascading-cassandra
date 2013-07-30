@@ -37,6 +37,6 @@ public interface ISource {
    * @throws IOException
    */
   public Tuple source(Map<String, Object> settings,
-                      SortedMap<ByteBuffer, IColumn> value,
-                      ByteBuffer key) throws IOException;
+                      Object key,
+                      Object value) throws IOException;
 }

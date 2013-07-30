@@ -1,5 +1,7 @@
 package com.ifesdjeen.cascading.cassandra.sinks;
 
+import cascading.tuple.Fields;
+import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import cascading.tuple.FieldsResolverException;
 import com.ifesdjeen.cascading.cassandra.SettingsHelper;
@@ -7,20 +9,25 @@ import org.apache.cassandra.thrift.*;
 
 import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 
+import org.apache.hadoop.mapred.OutputCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StaticRowSink
-        implements ISink {
+public class StaticRowSink implements ISink {
 
   private static final Logger logger = LoggerFactory.getLogger(StaticRowSink.class);
 
-  public List<Mutation> sink(Map<String, Object> settings,
-                             TupleEntry tupleEntry) {
+  public void sink(Map<String, Object> settings, TupleEntry tupleEntry, OutputCollector outputCollector)
+          throws IOException {
 
     String rowKeyField = SettingsHelper.getMappingRowKeyField(settings);
+
+    Tuple key = tupleEntry.selectTuple(new Fields(rowKeyField));
+    ByteBuffer keyBuffer = SerializerHelper.serialize(key.get(0));
 
     Map<String, String> sinkMappings = SettingsHelper.getSinkMappings(settings);
     int nfields = sinkMappings.size();
@@ -31,7 +38,7 @@ public class StaticRowSink
       String columnFieldMapping = sinkMappings.get(columnName);
 
       if (columnFieldMapping != rowKeyField) {
-        Object tupleEntryValue = null;
+        Object tupleEntryValue;
 
         try {
           tupleEntryValue = tupleEntry.get(columnFieldMapping);
@@ -50,6 +57,7 @@ public class StaticRowSink
         }
       }
     }
-    return mutations;
+
+    outputCollector.collect(keyBuffer, mutations);
   }
 }

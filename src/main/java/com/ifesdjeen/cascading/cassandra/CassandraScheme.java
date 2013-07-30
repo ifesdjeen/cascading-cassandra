@@ -121,8 +121,8 @@ public class CassandraScheme extends BaseCassandraScheme {
                         SourceCall<Object[], RecordReader> sourceCall) throws IOException {
     RecordReader input = sourceCall.getInput();
 
-    ByteBuffer key = (ByteBuffer) sourceCall.getContext()[0];
-    SortedMap<ByteBuffer, IColumn> columns = (SortedMap<ByteBuffer, IColumn>) sourceCall.getContext()[1];
+    Object key = sourceCall.getContext()[0];
+    Object columns = sourceCall.getContext()[1];
 
     boolean hasNext = input.next(key, columns);
 
@@ -131,7 +131,7 @@ public class CassandraScheme extends BaseCassandraScheme {
     }
 
     ISource sourceImpl = getSourceImpl();
-    Tuple result = sourceImpl.source(this.settings, columns, key);
+    Tuple result = sourceImpl.source(this.settings, key, columns);
 
     sourceCall.getIncomingEntry().setTuple(result);
     return true;
@@ -176,16 +176,8 @@ public class CassandraScheme extends BaseCassandraScheme {
     TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
     OutputCollector outputCollector = sinkCall.getOutput();
 
-    String rowKeyField = SettingsHelper.getMappingRowKeyField(settings);
-
-    Tuple key = tupleEntry.selectTuple(new Fields(rowKeyField));
-    ByteBuffer keyBuffer = SerializerHelper.serialize(key.get(0));
-
     ISink sinkImpl = getSinkImpl();
-
-    List<Mutation> mutations = sinkImpl.sink(settings, tupleEntry);
-
-    outputCollector.collect(keyBuffer, mutations);
+    sinkImpl.sink(settings, tupleEntry, outputCollector);
   }
 
   protected ISink getSinkImpl() {
