@@ -1,9 +1,10 @@
-package com.ifesdjeen.cascading.cassandra;
+package com.ifesdjeen.cascading.cassandra.sources;
 
 import java.util.*;
 import java.nio.ByteBuffer;
 import java.io.IOException;
 
+import com.ifesdjeen.cascading.cassandra.SettingsHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,10 +18,9 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 
 
-public class DynamicRowSource
-        implements ISource {
+public class DynamicRowSource extends BaseThriftSource implements ISource {
 
-  private static final Logger logger = LoggerFactory.getLogger(DynamicRowSource.class);
+  protected static final Logger logger = LoggerFactory.getLogger(DynamicRowSource.class);
 
   public Tuple source(Map<String, Object> settings,
                      SortedMap<ByteBuffer, IColumn> columns,

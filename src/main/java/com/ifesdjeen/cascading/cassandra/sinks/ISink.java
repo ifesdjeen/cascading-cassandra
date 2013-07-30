@@ -1,4 +1,4 @@
-package com.ifesdjeen.cascading.cassandra;
+package com.ifesdjeen.cascading.cassandra.sinks;
 
 import cascading.tuple.TupleEntry;
 import org.apache.cassandra.thrift.*;

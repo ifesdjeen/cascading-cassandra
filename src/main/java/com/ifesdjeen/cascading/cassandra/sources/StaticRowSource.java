@@ -1,9 +1,10 @@
-package com.ifesdjeen.cascading.cassandra;
+package com.ifesdjeen.cascading.cassandra.sources;
 
 import java.util.*;
 import java.nio.ByteBuffer;
 import java.io.IOException;
 
+import com.ifesdjeen.cascading.cassandra.SettingsHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,8 +20,7 @@ import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 /**
  * StaticRowSource is intended for usage with static sources, as the name suggests.
  */
-public class StaticRowSource
-        implements ISource {
+public class StaticRowSource extends BaseThriftSource implements ISource {
 
   private static final Logger logger = LoggerFactory.getLogger(StaticRowSource.class);
 

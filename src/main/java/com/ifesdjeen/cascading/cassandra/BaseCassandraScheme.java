@@ -1,7 +1,5 @@
 package com.ifesdjeen.cascading.cassandra;
 
-import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat;
-import org.apache.cassandra.utils.ByteBufferUtil;
 import cascading.flow.FlowProcess;
 import cascading.scheme.Scheme;
 import cascading.scheme.SourceCall;
@@ -14,12 +12,9 @@ import org.apache.hadoop.fs.Path;
 import org.apache.cassandra.hadoop.ConfigHelper;
 
 import java.util.*;
-import java.nio.ByteBuffer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.apache.cassandra.db.IColumn;
 
 public abstract class BaseCassandraScheme extends Scheme<JobConf, RecordReader, OutputCollector, Object[], Object[]> {
 
@@ -58,21 +53,6 @@ public abstract class BaseCassandraScheme extends Scheme<JobConf, RecordReader, 
    * Source Methods
    *
    */
-
-  /**
-   * @param flowProcess
-   * @param sourceCall
-   */
-  @Override
-  public void sourcePrepare(FlowProcess<JobConf> flowProcess,
-                            SourceCall<Object[], RecordReader> sourceCall) {
-    ByteBuffer key = ByteBufferUtil.clone((ByteBuffer) sourceCall.getInput().createKey());
-    SortedMap<ByteBuffer, IColumn> value = (SortedMap<ByteBuffer, IColumn>) sourceCall.getInput().createValue();
-
-    Object[] obj = new Object[]{key, value};
-
-    sourceCall.setContext(obj);
-  }
 
   @Override
   public void sourceConfInit(FlowProcess<JobConf> process,

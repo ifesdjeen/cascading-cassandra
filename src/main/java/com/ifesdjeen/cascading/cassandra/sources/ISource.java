@@ -1,13 +1,15 @@
-package com.ifesdjeen.cascading.cassandra;
+package com.ifesdjeen.cascading.cassandra.sources;
 
 import java.util.*;
 import java.nio.ByteBuffer;
 import java.io.IOException;
 
+import cascading.scheme.SourceCall;
 import cascading.tuple.Tuple;
 
 import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.db.IColumn;
+import org.apache.hadoop.mapred.RecordReader;
 
 
 /**
@@ -17,6 +19,13 @@ import org.apache.cassandra.db.IColumn;
  */
 public interface ISource {
 
+  /**
+   * Creates initial (empty) tuple
+   *
+   * @param sourceCall
+   * @return
+   */
+  public void sourcePrepare(SourceCall<Object[], RecordReader> sourceCall);
 
   /**
    * Convert `value` map (key/value pairs) to Cascading tuple.

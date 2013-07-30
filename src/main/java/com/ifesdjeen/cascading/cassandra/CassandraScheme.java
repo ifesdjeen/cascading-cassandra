@@ -1,6 +1,12 @@
 package com.ifesdjeen.cascading.cassandra;
 
 import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
+import com.ifesdjeen.cascading.cassandra.sinks.DynamicRowSink;
+import com.ifesdjeen.cascading.cassandra.sinks.ISink;
+import com.ifesdjeen.cascading.cassandra.sinks.StaticRowSink;
+import com.ifesdjeen.cascading.cassandra.sources.DynamicRowSource;
+import com.ifesdjeen.cascading.cassandra.sources.ISource;
+import com.ifesdjeen.cascading.cassandra.sources.StaticRowSource;
 import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat;
 import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.ByteBufferUtil;
@@ -38,6 +44,17 @@ public class CassandraScheme extends BaseCassandraScheme {
    * Source Methods
    *
    */
+
+  /**
+   * @param flowProcess
+   * @param sourceCall
+   */
+  @Override
+  public void sourcePrepare(FlowProcess<JobConf> flowProcess,
+                            SourceCall<Object[], RecordReader> sourceCall) {
+    ISource sourceImpl = getSourceImpl();
+    sourceImpl.sourcePrepare(sourceCall);
+  }
 
   /**
    *
@@ -104,19 +121,17 @@ public class CassandraScheme extends BaseCassandraScheme {
                         SourceCall<Object[], RecordReader> sourceCall) throws IOException {
     RecordReader input = sourceCall.getInput();
 
-    Object key = sourceCall.getContext()[0];
-    Object value = sourceCall.getContext()[1];
+    ByteBuffer key = (ByteBuffer) sourceCall.getContext()[0];
+    SortedMap<ByteBuffer, IColumn> columns = (SortedMap<ByteBuffer, IColumn>) sourceCall.getContext()[1];
 
-    boolean hasNext = input.next(key, value);
+    boolean hasNext = input.next(key, columns);
 
     if (!hasNext) {
       return false;
     }
 
-    SortedMap<ByteBuffer, IColumn> columns = (SortedMap<ByteBuffer, IColumn>) value;
-
     ISource sourceImpl = getSourceImpl();
-    Tuple result = sourceImpl.source(this.settings, columns, (ByteBuffer) key);
+    Tuple result = sourceImpl.source(this.settings, columns, key);
 
     sourceCall.getIncomingEntry().setTuple(result);
     return true;

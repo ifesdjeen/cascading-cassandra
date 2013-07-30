@@ -1,14 +1,12 @@
-package com.ifesdjeen.cascading.cassandra;
+package com.ifesdjeen.cascading.cassandra.sinks;
 
-import cascading.tuple.Fields;
-import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import cascading.tuple.FieldsResolverException;
 
 
+import com.ifesdjeen.cascading.cassandra.SettingsHelper;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.CompositeType;
-import org.apache.cassandra.db.marshal.AbstractCompositeType;
 import org.apache.cassandra.thrift.*;
 
 import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
@@ -17,7 +15,6 @@ import java.io.IOException;
 import java.util.*;
 import java.nio.ByteBuffer;
 
-import org.apache.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
