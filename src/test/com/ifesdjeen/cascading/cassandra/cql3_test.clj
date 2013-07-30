@@ -135,3 +135,23 @@
       (is (= "Erlang" (:language (first res))))
       (is (= "Cassaforte" (:name (second res))))
       (is (= "Clojure" (:language (second res)))))))
+
+(deftest t-cassandra-tap-as-source-wide-compact-storage
+  (dotimes [counter 100]
+    (client/prepared
+     (insert :libraries_wide
+             {:name (str "Cassaforte" counter)
+              :language (str "Clojure" counter)
+              :votes (int counter)})))
+
+  (let [tap (create-tap {"db.columnFamily" "libraries_wide"
+                         "types" {"name"      "UTF8Type"
+                                  "language"  "UTF8Type"
+                                  "votes"     "Int32Type"}})
+        query (<- [?count ?sum]
+                  (tap ?value1 ?value2 ?value3)
+                  (c/count ?count)
+                  (c/sum ?value3 :> ?sum))]
+    (fact "Handles simple calculations"
+          query
+          => (produces [[100 4950]]))))

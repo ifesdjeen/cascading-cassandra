@@ -14,8 +14,6 @@
   [f]
   (when (not (bound? (var session)))
     (e/start-server! :cleanup true)
-    ;; (def session (client/connect! ["192.168.60.15"]
-    ;;                               :port 9042))
     (def session (client/connect! ["127.0.0.1"]
                                   :port 19042)))
 
