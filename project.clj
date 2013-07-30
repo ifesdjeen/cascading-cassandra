@@ -1,4 +1,4 @@
-(defproject cascading-cassandra "1.0.0-rc1"
+(defproject cascading-cassandra "1.0.0-rc4"
   :description "Modern Cassandra tap for Cascading. Actually works with Cascading 2.0 and Cascalog 1.10."
   :min-lein-version "2.0.0"
   :license {:name "Apache License 2.0"}
