@@ -7,8 +7,6 @@ import cascading.tap.Tap;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import com.ifesdjeen.cascading.cassandra.BaseCassandraScheme;
-import com.ifesdjeen.cascading.cassandra.SettingsHelper;
-import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 import com.ifesdjeen.cascading.cassandra.sinks.CqlSink;
 import com.ifesdjeen.cascading.cassandra.sinks.ISink;
 import com.ifesdjeen.cascading.cassandra.sources.CqlSource;
@@ -23,7 +21,6 @@ import org.apache.hadoop.mapred.RecordReader;
 import org.jsoup.helper.StringUtil;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 public class CassandraCQL3Scheme extends BaseCassandraScheme {
@@ -52,6 +49,10 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
 
     ConfigHelper.setInputColumnFamily(conf, this.keyspace, this.columnFamily);
     conf.setInputFormat(CqlPagingInputFormat.class);
+
+    if (this.settings.containsKey("source.columns")) {
+      CqlConfigHelper.setInputColumns(conf, (String) this.settings.get("source.columns"));
+    }
 
     if (this.settings.containsKey("source.CQLPageRowSize")) {
       CqlConfigHelper.setInputCQLPageRowSize(conf, (String) this.settings.get("source.CQLPageRowSize"));
