@@ -1,6 +1,5 @@
 package com.ifesdjeen.cascading.cassandra;
 
-import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 import com.ifesdjeen.cascading.cassandra.sinks.DynamicRowSink;
 import com.ifesdjeen.cascading.cassandra.sinks.ISink;
 import com.ifesdjeen.cascading.cassandra.sinks.StaticRowSink;
@@ -17,7 +16,6 @@ import cascading.scheme.SourceCall;
 
 import cascading.tap.Tap;
 
-import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import org.apache.commons.lang.StringUtils;
@@ -30,8 +28,6 @@ import org.apache.cassandra.hadoop.ColumnFamilyInputFormat;
 import java.io.IOException;
 import java.util.*;
 import java.nio.ByteBuffer;
-
-import org.apache.cassandra.db.IColumn;
 
 public class CassandraScheme extends BaseCassandraScheme {
 

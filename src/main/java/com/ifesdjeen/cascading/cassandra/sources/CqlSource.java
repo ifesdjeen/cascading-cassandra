@@ -4,13 +4,11 @@ import cascading.scheme.SourceCall;
 import cascading.tuple.Tuple;
 import com.ifesdjeen.cascading.cassandra.SettingsHelper;
 import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
-import org.apache.cassandra.db.IColumn;
 import org.apache.hadoop.mapred.RecordReader;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.SortedMap;
 
 public class CqlSource implements ISource {
 
