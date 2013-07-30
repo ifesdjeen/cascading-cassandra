@@ -50,6 +50,27 @@
 
     (fact query => (produces [[100 4950 9900]]))))
 
+(deftest t-cassandra-tap-compact-storage-with-columns
+  (dotimes [counter 100]
+    (client/prepared
+     (insert :libraries
+             {:name (str "Cassaforte" counter)
+              :language (str "Clojure" counter)
+              :votes (int counter)})))
+
+  (let [tap (create-tap {"db.columnFamily" "libraries"
+                         "source.columns" "votes"
+                         "types" {"name"      "UTF8Type"
+                                  "votes"     "Int32Type"}})
+        query (<- [?count ?sum]
+                   (tap _ ?value1)
+                   (c/count ?count)
+                   (c/sum ?value1 :> ?sum))]
+
+    (fact "Handles simple calculations"
+          query
+          => (produces [[100 4950]]))))
+
 (deftest t-tap-as-source-normal
   (dotimes [counter 100]
     (client/prepared
