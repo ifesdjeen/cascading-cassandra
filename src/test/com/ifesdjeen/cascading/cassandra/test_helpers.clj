@@ -42,6 +42,20 @@
                                      :votes :int
                                      :primary-key [:name]}))
 
+  (create-table :libraries_cql_3_composite_key
+                (column-definitions {:name :varchar
+                                     :language :varchar
+                                     :schmotes :int
+                                     :votes :int
+                                     :primary-key [:name :language]}))
+
+  (create-table :libraries_cql_3_empty_value
+                (column-definitions {:name :varchar
+                                     :language :varchar
+                                     :schmotes :int
+                                     :votes :int
+                                     :primary-key [:name :language :schmotes :votes]}))
+
   (create-table :libraries_wide
                 (with {:compact-storage true})
                 (column-definitions {:name :varchar
