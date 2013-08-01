@@ -92,6 +92,76 @@
 
     (fact query => (produces [[100 4950 9900]]))))
 
+(defn orf
+  [& args]
+  (reduce #(or %1 %2) args))
+
+(deftest t-tap-as-source-normal-null-value
+  (dotimes [counter 100]
+    (client/prepared
+     (insert :libraries_cql_3
+             {:name (str "Cassaforte" counter)
+              :language (str "Clojure" counter)
+              :schmotes (int counter)
+              :votes nil})))
+  (let [tap (create-tap {"db.columnFamily" "libraries_cql_3"
+                         "types" {"name"      "UTF8Type"
+                                  "language"  "UTF8Type"
+                                  "schmotes"  "Int32Type"
+                                  "votes"     "Int32Type"}})
+        query (<- [?count ?sum3 ?sum4]
+                  (tap ?value1 ?value2 ?value3 !value4)
+                  (c/count ?count)
+                  (c/sum ?value3 :> ?sum3)
+                  (orf !value4 0 :> ?value4)
+                  (c/sum ?value4 :> ?sum4))]
+
+    ;;(fact (??- query) => [[[100 4950 0]]])
+    (fact query => (produces [[100 4950 0]]))
+    ))
+
+(deftest t-tap-as-source-normal-composite-key
+  (dotimes [counter 100]
+    (client/prepared
+     (insert :libraries_cql_3_composite_key
+             {:name (str "Cassaforte" counter)
+              :language (str "Clojure" counter)
+              :schmotes (int counter)
+              :votes (int (* 2 counter))})))
+  (let [tap (create-tap {"db.columnFamily" "libraries_cql_3_composite_key"
+                         "types" {"name"      "UTF8Type"
+                                  "language"  "UTF8Type"
+                                  "schmotes"  "Int32Type"
+                                  "votes"     "Int32Type"}})
+        query (<- [?count ?sum3 ?sum4]
+                  (tap ?value1 ?value2 ?value3 ?value4)
+                  (c/count ?count)
+                  (c/sum ?value3 :> ?sum3)
+                  (c/sum ?value4 :> ?sum4))]
+
+    (fact query => (produces [[100 4950 9900]]))))
+
+(deftest t-tap-as-source-normal-empty-value
+  (dotimes [counter 100]
+    (client/prepared
+     (insert :libraries_cql_3_empty_value
+             {:name (str "Cassaforte" counter)
+              :language (str "Clojure" counter)
+              :schmotes (int counter)
+              :votes (int (* 2 counter))})))
+  (let [tap (create-tap {"db.columnFamily" "libraries_cql_3_empty_value"
+                         "types" {"name"      "UTF8Type"
+                                  "language"  "UTF8Type"
+                                  "schmotes"  "Int32Type"
+                                  "votes"     "Int32Type"}})
+        query (<- [?count ?sum3 ?sum4]
+                  (tap ?value1 ?value2 ?value3 ?value4)
+                  (c/count ?count)
+                  (c/sum ?value3 :> ?sum3)
+                  (c/sum ?value4 :> ?sum4))]
+
+    (fact query => (produces [[100 4950 9900]]))))
+
 (deftest t-cassandra-tap-as-source-with-where-statement
   (create-index :libraries_cql_3 :schmotes)
   (dotimes [counter 100]
@@ -156,6 +226,28 @@
       (is (= "Erlang" (:language (first res))))
       (is (= "Cassaforte" (:name (second res))))
       (is (= "Clojure" (:language (second res)))))))
+
+(deftest t-cassandra-tap-as-sink-normal-composite-key
+  (let [test-data [["Riak" "Erlang" (int 100)]
+                   ["Cassaforte" "Clojure" (int 150)]]]
+
+    (?<- (create-tap {"db.columnFamily" "libraries_cql_3_composite_key"
+                      "sink.outputCQL" "UPDATE libraries_cql_3_composite_key SET votes = ?"
+                      "mappings.cqlKeys" ["name" "language"]
+                      "mappings.cqlValues" ["votes"]
+                      "mappings.cql" {"name"     "?value1"
+                                      "language" "?value2"
+                                      "votes"    "?value3" }})
+         [?value1 ?value2 ?value3]
+         (test-data ?value1 ?value2 ?value3))
+
+    (let [res (select :libraries_cql_3_composite_key)]
+      (is (= "Riak" (:name (first res))))
+      (is (= "Erlang" (:language (first res))))
+      (is (= 100 (:votes (first res))))
+      (is (= "Cassaforte" (:name (second res))))
+      (is (= "Clojure" (:language (second res))))
+      (is (= 150 (:votes (second res)))))))
 
 (deftest t-cassandra-tap-as-source-wide-compact-storage
   (dotimes [counter 100]
