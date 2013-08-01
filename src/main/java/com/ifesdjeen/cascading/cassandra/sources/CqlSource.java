@@ -1,5 +1,6 @@
 package com.ifesdjeen.cascading.cassandra.sources;
 
+import org.apache.cassandra.db.marshal.AbstractType;
 import cascading.scheme.SourceCall;
 import cascading.tuple.Tuple;
 import com.ifesdjeen.cascading.cassandra.SettingsHelper;
@@ -42,8 +43,13 @@ public class CqlSource implements ISource {
 
     for(Map.Entry<String, ByteBuffer> column : columns.entrySet()) {
       try {
-        result.add(SerializerHelper.deserialize(column.getValue(),
-                SerializerHelper.inferType(dataTypes.get(column.getKey()))));
+        ByteBuffer serializedVal = column.getValue();
+        Object val = null;
+        if (serializedVal != null) {
+          AbstractType type = SerializerHelper.inferType(dataTypes.get(column.getKey()));
+          val = SerializerHelper.deserialize(serializedVal, type);
+        }
+        result.add(val);
       } catch (Exception e) {
         throw new RuntimeException("Couldn't deserialize value for: " + column.getKey(), e);
       }
