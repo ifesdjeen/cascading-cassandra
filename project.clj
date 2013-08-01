@@ -1,4 +1,4 @@
-(defproject cascading-cassandra "1.0.0-rc5"
+(defproject cascading-cassandra "1.0.0-rc6-SNAPSHOT"
   :description "Modern Cassandra tap for Cascading. Actually works with Cascading 2.0 and Cascalog 1.10."
   :url "https://github.com/ifesdjeen/cascading-cassandra"
   :min-lein-version "2.0.0"
