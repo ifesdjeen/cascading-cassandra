@@ -249,6 +249,28 @@
       (is (= "Clojure" (:language (second res))))
       (is (= 150 (:votes (second res)))))))
 
+(deftest t-cassandra-tap-as-sink-normal-composite-partition-key
+  (let [test-data [["Riak" "Erlang" (int 100)]
+                   ["Cassaforte" "Clojure" (int 150)]]]
+
+    (?<- (create-tap {"db.columnFamily" "libraries_cql_3_composite_partition_key"
+                      "sink.outputCQL" "UPDATE libraries_cql_3_composite_partition_key SET votes = ?"
+                      "mappings.cqlKeys" ["name" "language"]
+                      "mappings.cqlValues" ["votes"]
+                      "mappings.cql" {"name"     "?value1"
+                                      "language" "?value2"
+                                      "votes"    "?value3" }})
+         [?value1 ?value2 ?value3]
+         (test-data ?value1 ?value2 ?value3))
+
+    (let [res (select :libraries_cql_3_composite_partition_key)]
+      (is (= "Riak" (:name (first res))))
+      (is (= "Erlang" (:language (first res))))
+      (is (= 100 (:votes (first res))))
+      (is (= "Cassaforte" (:name (second res))))
+      (is (= "Clojure" (:language (second res))))
+      (is (= 150 (:votes (second res)))))))
+
 (deftest t-cassandra-tap-as-source-wide-compact-storage
   (dotimes [counter 100]
     (client/prepared

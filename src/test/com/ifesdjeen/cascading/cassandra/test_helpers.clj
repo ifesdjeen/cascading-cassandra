@@ -49,6 +49,13 @@
                                      :votes :int
                                      :primary-key [:name :language]}))
 
+  (create-table :libraries_cql_3_composite_partition_key
+                (column-definitions {:name :varchar
+                                     :language :varchar
+                                     :schmotes :int
+                                     :votes :int
+                                     :primary-key [[:name :language]]}))
+
   (create-table :libraries_cql_3_empty_value
                 (column-definitions {:name :varchar
                                      :language :varchar
