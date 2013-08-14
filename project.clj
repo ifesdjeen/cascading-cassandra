@@ -11,7 +11,7 @@
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
   :resource-paths    ["src/resources"]
-  :profiles {:provided {:dependencies   [[org.apache.cassandra/cassandra-all "1.2.8"
+  :profiles {:provided {:dependencies   [[mccraigmccraig/cassandra-all "1.2.8-SNAPSHOT"
                                           :exclusions [org.apache.hadoop
                                                        org.apache.thrift/libthrift
                                                        org.apache.httpcomponents/httpclient]]
@@ -27,7 +27,8 @@
                                          "-Xmx768m"]
                         :dependencies   [[org.xerial.snappy/snappy-java "1.0.5-M3"]
                                          [clojurewerkz/cassaforte "1.2.0-SNAPSHOT"
-                                          :exclusions [org.apache.thrift/libthrift]]
+                                          :exclusions [org.apache.thrift/libthrift
+                                                       org.apache.cassandra/cassandra-all]]
                                          [commons-lang/commons-lang "2.6"]]}}
   :test-selectors {:all     (constantly true)
                    :focus   :focus
