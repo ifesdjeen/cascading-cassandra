@@ -55,7 +55,7 @@ public class SerializerHelper {
 
   public static ByteBuffer serialize(Object obj) {
     if (obj == null) {
-      return null;
+      return nullToByteBuffer();
     } else if (obj instanceof BigInteger) {
       LOG.debug("Serializing {} as BigInteger.", obj);
       return bigIntegerToByteBuffer((BigInteger) obj);
@@ -100,6 +100,10 @@ public class SerializerHelper {
     }
     ByteBuffer r = builder.build();
     return r;
+  }
+
+  public static ByteBuffer nullToByteBuffer() {
+    return ByteBuffer.wrap(new byte[0]);
   }
 
   public static ByteBuffer bigIntegerToByteBuffer(BigInteger obj) {
