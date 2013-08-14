@@ -11,7 +11,7 @@
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
   :resource-paths    ["src/resources"]
-  :profiles {:provided {:dependencies   [[org.apache.cassandra/cassandra-all "1.2.6"
+  :profiles {:provided {:dependencies   [[org.apache.cassandra/cassandra-all "1.2.8"
                                           :exclusions [org.apache.hadoop
                                                        org.apache.thrift/libthrift
                                                        org.apache.httpcomponents/httpclient]]
@@ -22,11 +22,11 @@
                                          ]}
              :dev      {:resource-paths ["src/resources"]
                         :jvm-opts       ["-server"
-                                         "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n"
+                                         "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=51240"
                                          "-javaagent:lib/jamm-0.2.5.jar"
                                          "-Xmx768m"]
                         :dependencies   [[org.xerial.snappy/snappy-java "1.0.5-M3"]
-                                         [clojurewerkz/cassaforte "1.1.0"
+                                         [clojurewerkz/cassaforte "1.2.0-SNAPSHOT"
                                           :exclusions [org.apache.thrift/libthrift]]
                                          [commons-lang/commons-lang "2.6"]]}}
   :test-selectors {:all     (constantly true)
