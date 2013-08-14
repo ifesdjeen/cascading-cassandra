@@ -1,3 +1,4 @@
+lein: lein2
 language: clojure
 install: lein2 deps
 script: lein2 javac && lein2 test
@@ -10,4 +11,3 @@ jdk:
 branches:
   only:
     - master
-
