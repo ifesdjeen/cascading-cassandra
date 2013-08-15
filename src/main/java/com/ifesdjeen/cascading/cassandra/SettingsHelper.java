@@ -133,4 +133,22 @@ public class SettingsHelper {
     List<String> mappingSpecs = (List<String>)settings.get("mappings.cqlValues");
     return parseMappingSpecs(mappingSpecs, "!");
   }
+
+  public static String getSinkOutputCql(Map<String,Object> settings) {
+    String cf = (String)settings.get("db.columnFamily");
+    Map<String,String> valueMappings = getCqlValueMappings(settings);
+
+    String outputCql = "UPDATE " + cf + " SET ";
+
+    Iterator<Map.Entry<String,String>> i = valueMappings.entrySet().iterator();
+    while(i.hasNext()) {
+      Map.Entry<String,String> vm = i.next();
+      outputCql += "\"" + vm.getKey() + "\" = ?";
+      if (i.hasNext()) {
+        outputCql += ", ";
+      }
+    }
+
+    return outputCql;
+  }
 }

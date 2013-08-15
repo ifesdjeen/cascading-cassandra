@@ -7,6 +7,7 @@ import cascading.tap.Tap;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import com.ifesdjeen.cascading.cassandra.BaseCassandraScheme;
+import com.ifesdjeen.cascading.cassandra.SettingsHelper;
 import com.ifesdjeen.cascading.cassandra.sinks.CqlSink;
 import com.ifesdjeen.cascading.cassandra.sinks.ISink;
 import com.ifesdjeen.cascading.cassandra.sources.CqlSource;
@@ -141,7 +142,7 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
     if (this.settings.containsKey("sink.outputCQL")) {
       CqlConfigHelper.setOutputCql(conf, (String) this.settings.get("sink.outputCQL"));
     } else {
-      throw new RuntimeException("Can't sink without 'sink.outputCQL'");
+      CqlConfigHelper.setOutputCql(conf, SettingsHelper.getSinkOutputCql( this.settings ));
     }
 
     sinkImpl = new CqlSink();

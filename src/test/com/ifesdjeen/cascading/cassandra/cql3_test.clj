@@ -192,7 +192,7 @@
                    ["Cassaforte" "Clojure" (int 150)]]]
 
     (?<- (create-tap {"db.columnFamily" "libraries"
-                      "sink.outputCQL" "UPDATE libraries SET votes = ?, language = ?"
+                      ;; "sink.outputCQL" "UPDATE libraries SET votes = ?, language = ?"
                       "mappings.cqlKeys" ["name:?value1"]
                       "mappings.cqlValues" ["votes:?value3" "language:?value2"]})
          [?value1 ?value2 ?value3]
@@ -209,7 +209,7 @@
                    ["Cassaforte" "Clojure" (int 150)]]]
 
     (?<- (create-tap {"db.columnFamily" "libraries_cql_3"
-                      "sink.outputCQL" "UPDATE libraries_cql_3 SET votes = ?, language = ?"
+                      ;; "sink.outputCQL" "UPDATE libraries_cql_3 SET votes = ?, language = ?"
                       "mappings.cqlKeys" ["name:?value1"]
                       "mappings.cqlValues" ["votes:?value3" "language:?value2"]})
          [?value1 ?value2 ?value3]
@@ -226,7 +226,7 @@
                    ["Cassaforte" "Clojure" (int 150)]]]
 
     (?<- (create-tap {"db.columnFamily" "libraries_cql_3"
-                      "sink.outputCQL" "UPDATE libraries_cql_3 SET votes = ?, language = ?"
+                      ;; "sink.outputCQL" "UPDATE libraries_cql_3 SET votes = ?, language = ?"
                       "mappings.cqlKeys" ["name"]
                       "mappings.cqlValues" ["votes" "language"]})
          [?name !language !votes]
@@ -243,7 +243,7 @@
                    ["Cassaforte" "Clojure" nil]]]
 
     (?<- (create-tap {"db.columnFamily" "libraries_cql_3"
-                      "sink.outputCQL" "UPDATE libraries_cql_3 SET votes = ?, language = ?"
+                      ;; "sink.outputCQL" "UPDATE libraries_cql_3 SET votes = ?, language = ?"
                       "mappings.cqlKeys" ["name:?value1"]
                       "mappings.cqlValues" ["votes:!value3" "language:!value2"]})
          [?value1 !value2 !value3]
@@ -262,7 +262,7 @@
                    ["Cassaforte" "Clojure" (int 150)]]]
 
     (?<- (create-tap {"db.columnFamily" "libraries_cql_3_composite_key"
-                      "sink.outputCQL" "UPDATE libraries_cql_3_composite_key SET votes = ?"
+                      ;; "sink.outputCQL" "UPDATE libraries_cql_3_composite_key SET votes = ?"
                       "mappings.cqlKeys" ["name:?value1" "language:?value2"]
                       "mappings.cqlValues" ["votes:?value3"]})
          [?value1 ?value2 ?value3]
@@ -281,7 +281,7 @@
                    ["Cassaforte" "Clojure" (int 150)]]]
 
     (?<- (create-tap {"db.columnFamily" "libraries_cql_3_composite_partition_key"
-                      "sink.outputCQL" "UPDATE libraries_cql_3_composite_partition_key SET votes = ?"
+                      ;; "sink.outputCQL" "UPDATE libraries_cql_3_composite_partition_key SET votes = ?"
                       "mappings.cqlKeys" ["name:?value1" "language:?value2"]
                       "mappings.cqlValues" ["votes:?value3"]})
          [?value1 ?value2 ?value3]
