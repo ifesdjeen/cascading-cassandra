@@ -12,8 +12,14 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-public class CqlSource implements Serializable,ISource {
+public class CqlSource implements Serializable,IConfigurableSource {
 
+  private Map<String,Object> settings;
+
+  @Override
+  public void configure(Map<String, Object> settings) {
+    this.settings = settings;
+  }
 
   @Override
   public void sourcePrepare(SourceCall<Object[], RecordReader> sourceCall) {
@@ -26,7 +32,7 @@ public class CqlSource implements Serializable,ISource {
   }
 
   @Override
-  public Tuple source(Map<String, Object> settings, Object boxedKey, Object boxedValue) throws IOException {
+  public Tuple source(Object boxedKey, Object boxedValue) throws IOException {
     Map<String, String> dataTypes = SettingsHelper.getTypes(settings);
 
     Tuple result = new Tuple();

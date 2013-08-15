@@ -14,11 +14,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CqlSink implements Serializable,ISink {
+public class CqlSink implements Serializable,IConfigurableSink {
 
   private static final Logger logger = LoggerFactory.getLogger(CqlSink.class);
 
-  public void sink(Map<String, Object> settings, TupleEntry tupleEntry, OutputCollector outputCollector)
+  private Map<String,Object> settings;
+
+  @Override
+  public void configure(Map<String, Object> settings) {
+    this.settings = settings;
+  }
+
+  public void sink(TupleEntry tupleEntry, OutputCollector outputCollector)
           throws IOException {
     List<String> cqlKeys = (List<String>) settings.get("mappings.cqlKeys");
     List<String> cqlValues = (List<String>) settings.get("mappings.cqlValues");

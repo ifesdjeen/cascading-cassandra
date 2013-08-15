@@ -70,6 +70,7 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
     conf.set("row_key", "name");
 
     sourceImpl = new CqlSource();
+    sourceImpl.configure(this.settings);
   }
 
   /**
@@ -104,7 +105,7 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
       return false;
     }
 
-    Tuple result = sourceImpl.source(this.settings, keys, columns);
+    Tuple result = sourceImpl.source(keys, columns);
     sourceCall.getIncomingEntry().setTuple(result);
 
     return true;
@@ -144,6 +145,7 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
     }
 
     sinkImpl = new CqlSink();
+    sinkImpl.configure(this.settings);
   }
 
   /**
@@ -157,6 +159,6 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
     TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
     OutputCollector outputCollector = sinkCall.getOutput();
 
-    sinkImpl.sink(this.settings, tupleEntry, outputCollector);
+    sinkImpl.sink(tupleEntry, outputCollector);
   }
 }
