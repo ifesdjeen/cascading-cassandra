@@ -8,10 +8,11 @@ import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 import org.apache.hadoop.mapred.RecordReader;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-public class CqlSource implements ISource {
+public class CqlSource implements Serializable,ISource {
 
 
   @Override

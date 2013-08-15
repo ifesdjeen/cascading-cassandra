@@ -7,13 +7,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CqlSink implements ISink {
+public class CqlSink implements Serializable,ISink {
 
   private static final Logger logger = LoggerFactory.getLogger(CqlSink.class);
 

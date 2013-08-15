@@ -25,6 +25,9 @@ import java.util.*;
 
 public class CassandraCQL3Scheme extends BaseCassandraScheme {
 
+  protected CqlSource sourceImpl;
+  protected CqlSink sinkImpl;
+
   public CassandraCQL3Scheme(Map<String, Object> settings) {
     super(settings);
   }
@@ -65,6 +68,8 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
     }
 
     conf.set("row_key", "name");
+
+    sourceImpl = new CqlSource();
   }
 
   /**
@@ -75,7 +80,6 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
   @Override
   public void sourcePrepare(FlowProcess<JobConf> flowProcess,
                             SourceCall<Object[], RecordReader> sourceCall) {
-    ISource sourceImpl = new CqlSource();
     sourceImpl.sourcePrepare(sourceCall);
   }
 
@@ -100,7 +104,6 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
       return false;
     }
 
-    ISource sourceImpl = new CqlSource();
     Tuple result = sourceImpl.source(this.settings, keys, columns);
     sourceCall.getIncomingEntry().setTuple(result);
 
@@ -139,6 +142,8 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
     } else {
       throw new RuntimeException("Can't sink without 'sink.outputCQL'");
     }
+
+    sinkImpl = new CqlSink();
   }
 
   /**
@@ -152,7 +157,6 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
     TupleEntry tupleEntry = sinkCall.getOutgoingEntry();
     OutputCollector outputCollector = sinkCall.getOutput();
 
-    ISink sinkImpl = new CqlSink();
     sinkImpl.sink(this.settings, tupleEntry, outputCollector);
   }
 }
