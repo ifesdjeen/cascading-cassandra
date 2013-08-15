@@ -18,19 +18,19 @@ public class CqlSink implements Serializable,IConfigurableSink {
 
   private static final Logger logger = LoggerFactory.getLogger(CqlSink.class);
 
-  private Map<String,Object> settings;
+  private List<String> cqlKeys;
+  private List<String> cqlValues;
+  private Map<String,String> columnMappings;
 
   @Override
   public void configure(Map<String, Object> settings) {
-    this.settings = settings;
+    this.columnMappings = (Map<String, String>) settings.get("mappings.cql");
+    this.cqlKeys = (List<String>) settings.get("mappings.cqlKeys");
+    this.cqlValues = (List<String>) settings.get("mappings.cqlValues");
   }
 
   public void sink(TupleEntry tupleEntry, OutputCollector outputCollector)
           throws IOException {
-    List<String> cqlKeys = (List<String>) settings.get("mappings.cqlKeys");
-    List<String> cqlValues = (List<String>) settings.get("mappings.cqlValues");
-    Map<String, String> columnMappings = (Map<String, String>) settings.get("mappings.cql");
-
     Map<String, ByteBuffer> keys = new LinkedHashMap<String, ByteBuffer>();
     List<ByteBuffer> values = new ArrayList<ByteBuffer>();
 

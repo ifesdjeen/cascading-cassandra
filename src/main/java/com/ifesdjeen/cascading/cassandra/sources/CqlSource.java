@@ -14,11 +14,11 @@ import java.util.Map;
 
 public class CqlSource implements Serializable,IConfigurableSource {
 
-  private Map<String,Object> settings;
+  private Map<String, String> dataTypes;
 
   @Override
   public void configure(Map<String, Object> settings) {
-    this.settings = settings;
+    this.dataTypes =  SettingsHelper.getTypes(settings);
   }
 
   @Override
@@ -33,7 +33,6 @@ public class CqlSource implements Serializable,IConfigurableSource {
 
   @Override
   public Tuple source(Object boxedKey, Object boxedValue) throws IOException {
-    Map<String, String> dataTypes = SettingsHelper.getTypes(settings);
 
     Tuple result = new Tuple();
     Map<String,ByteBuffer> keys = (Map<String,ByteBuffer>) boxedKey;
