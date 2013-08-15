@@ -98,4 +98,39 @@ public class SettingsHelper {
                     (settings.containsKey("mappings.rowKey") &&
                             settings.containsKey("mappings.sink")));
   }
+
+  /**
+   * parse a mappingSpec, returning
+   * @param mappingSpecs an ordered list of "<cassandra-col-name>:<tuple-field>" mappings
+   * @return a Map of {<cassandra-col-name> => <tuple-field>} entries, with predictable iteration order the same as the
+   * order of mappings in the mappingSpec
+   */
+  public static Map<String,String> parseMappingSpecs(List<String> mappingSpecs, String defaultTupleFieldType) {
+    Map<String,String> mapping = new LinkedHashMap<String, String>();
+
+    for(String mappingSpec : mappingSpecs) {
+      String[] mappingComponents = mappingSpec.split(":");
+      String cassandraColName = mappingComponents[0];
+      String tupleField;
+      if (mappingComponents.length>1) {
+        tupleField = mappingComponents[1];
+      } else {
+        tupleField = defaultTupleFieldType + cassandraColName;
+      }
+
+      mapping.put(cassandraColName, tupleField);
+    }
+
+    return mapping;
+  }
+
+  public static Map<String,String> getCqlKeyMappings(Map<String, Object> settings) {
+    List<String> mappingSpecs = (List<String>)settings.get("mappings.cqlKeys");
+    return parseMappingSpecs(mappingSpecs, "?");
+  }
+
+  public static Map<String,String> getCqlValueMappings(Map<String, Object> settings) {
+    List<String> mappingSpecs = (List<String>)settings.get("mappings.cqlValues");
+    return parseMappingSpecs(mappingSpecs, "!");
+  }
 }

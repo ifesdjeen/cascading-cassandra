@@ -1,6 +1,7 @@
 package com.ifesdjeen.cascading.cassandra.sinks;
 
 import cascading.tuple.TupleEntry;
+import com.ifesdjeen.cascading.cassandra.SettingsHelper;
 import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.slf4j.Logger;
@@ -18,15 +19,13 @@ public class CqlSink implements Serializable,IConfigurableSink {
 
   private static final Logger logger = LoggerFactory.getLogger(CqlSink.class);
 
-  private List<String> cqlKeys;
-  private List<String> cqlValues;
-  private Map<String,String> columnMappings;
+  private Map<String,String> cqlKeyMappings;
+  private Map<String,String> cqlValueMappings;
 
   @Override
   public void configure(Map<String, Object> settings) {
-    this.columnMappings = (Map<String, String>) settings.get("mappings.cql");
-    this.cqlKeys = (List<String>) settings.get("mappings.cqlKeys");
-    this.cqlValues = (List<String>) settings.get("mappings.cqlValues");
+    this.cqlKeyMappings = SettingsHelper.getCqlKeyMappings(settings);
+    this.cqlValueMappings = SettingsHelper.getCqlValueMappings(settings);
   }
 
   public void sink(TupleEntry tupleEntry, OutputCollector outputCollector)
@@ -34,13 +33,12 @@ public class CqlSink implements Serializable,IConfigurableSink {
     Map<String, ByteBuffer> keys = new LinkedHashMap<String, ByteBuffer>();
     List<ByteBuffer> values = new ArrayList<ByteBuffer>();
 
-    for (String key: cqlKeys) {
-      keys.put(key, SerializerHelper.serialize(tupleEntry.getObject(columnMappings.get(key))));
+    for (String key: cqlKeyMappings.keySet()) {
+      keys.put(key, SerializerHelper.serialize(tupleEntry.getObject(cqlKeyMappings.get(key))));
     }
 
-    // Unfortunately we can't just use hashmap because of order-dependent CQL queries. OP
-    for (String value: cqlValues) {
-      values.add(SerializerHelper.serialize(tupleEntry.getObject(columnMappings.get(value))));
+    for (String value: cqlValueMappings.keySet()) {
+      values.add(SerializerHelper.serialize(tupleEntry.getObject(cqlValueMappings.get(value))));
     }
 
     outputCollector.collect(keys, values);

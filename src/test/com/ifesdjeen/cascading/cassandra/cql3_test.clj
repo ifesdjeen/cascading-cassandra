@@ -193,11 +193,8 @@
 
     (?<- (create-tap {"db.columnFamily" "libraries"
                       "sink.outputCQL" "UPDATE libraries SET votes = ?, language = ?"
-                      "mappings.cqlKeys" ["name"]
-                      "mappings.cqlValues" ["votes" "language"]
-                      "mappings.cql" {"name"     "?value1"
-                                      "language" "?value2"
-                                      "votes"    "?value3" }})
+                      "mappings.cqlKeys" ["name:?value1"]
+                      "mappings.cqlValues" ["votes:?value3" "language:?value2"]})
          [?value1 ?value2 ?value3]
          (test-data ?value1 ?value2 ?value3))
 
@@ -213,13 +210,27 @@
 
     (?<- (create-tap {"db.columnFamily" "libraries_cql_3"
                       "sink.outputCQL" "UPDATE libraries_cql_3 SET votes = ?, language = ?"
-                      "mappings.cqlKeys" ["name"]
-                      "mappings.cqlValues" ["votes" "language"]
-                      "mappings.cql" {"name"     "?value1"
-                                      "language" "?value2"
-                                      "votes"    "?value3" }})
+                      "mappings.cqlKeys" ["name:?value1"]
+                      "mappings.cqlValues" ["votes:?value3" "language:?value2"]})
          [?value1 ?value2 ?value3]
          (test-data ?value1 ?value2 ?value3))
+
+    (let [res (select :libraries_cql_3)]
+      (is (= "Riak" (:name (first res))))
+      (is (= "Erlang" (:language (first res))))
+      (is (= "Cassaforte" (:name (second res))))
+      (is (= "Clojure" (:language (second res)))))))
+
+(deftest t-cassandra-tap-as-sink-normal-default-mappings
+  (let [test-data [["Riak" "Erlang" (int 100)]
+                   ["Cassaforte" "Clojure" (int 150)]]]
+
+    (?<- (create-tap {"db.columnFamily" "libraries_cql_3"
+                      "sink.outputCQL" "UPDATE libraries_cql_3 SET votes = ?, language = ?"
+                      "mappings.cqlKeys" ["name"]
+                      "mappings.cqlValues" ["votes" "language"]})
+         [?name !language !votes]
+         (test-data ?name !language !votes))
 
     (let [res (select :libraries_cql_3)]
       (is (= "Riak" (:name (first res))))
@@ -233,11 +244,8 @@
 
     (?<- (create-tap {"db.columnFamily" "libraries_cql_3"
                       "sink.outputCQL" "UPDATE libraries_cql_3 SET votes = ?, language = ?"
-                      "mappings.cqlKeys" ["name"]
-                      "mappings.cqlValues" ["votes" "language"]
-                      "mappings.cql" {"name"     "?value1"
-                                      "language" "!value2"
-                                      "votes"    "!value3" }})
+                      "mappings.cqlKeys" ["name:?value1"]
+                      "mappings.cqlValues" ["votes:!value3" "language:!value2"]})
          [?value1 !value2 !value3]
          (test-data ?value1 !value2 !value3))
 
@@ -255,11 +263,8 @@
 
     (?<- (create-tap {"db.columnFamily" "libraries_cql_3_composite_key"
                       "sink.outputCQL" "UPDATE libraries_cql_3_composite_key SET votes = ?"
-                      "mappings.cqlKeys" ["name" "language"]
-                      "mappings.cqlValues" ["votes"]
-                      "mappings.cql" {"name"     "?value1"
-                                      "language" "?value2"
-                                      "votes"    "?value3" }})
+                      "mappings.cqlKeys" ["name:?value1" "language:?value2"]
+                      "mappings.cqlValues" ["votes:?value3"]})
          [?value1 ?value2 ?value3]
          (test-data ?value1 ?value2 ?value3))
 
@@ -277,11 +282,8 @@
 
     (?<- (create-tap {"db.columnFamily" "libraries_cql_3_composite_partition_key"
                       "sink.outputCQL" "UPDATE libraries_cql_3_composite_partition_key SET votes = ?"
-                      "mappings.cqlKeys" ["name" "language"]
-                      "mappings.cqlValues" ["votes"]
-                      "mappings.cql" {"name"     "?value1"
-                                      "language" "?value2"
-                                      "votes"    "?value3" }})
+                      "mappings.cqlKeys" ["name:?value1" "language:?value2"]
+                      "mappings.cqlValues" ["votes:?value3"]})
          [?value1 ?value2 ?value3]
          (test-data ?value1 ?value2 ?value3))
 
