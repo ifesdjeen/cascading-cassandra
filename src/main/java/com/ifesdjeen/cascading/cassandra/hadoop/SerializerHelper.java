@@ -69,8 +69,8 @@ public class SerializerHelper {
       LOG.debug("Serializing {} as Double.", obj);
       return doubleToByteBuffer((Double) obj);
     } else if (obj instanceof BigDecimal) {
-      LOG.debug("Serializing {} as Double, casted from BigDecimal.", obj);
-      return doubleToByteBuffer(((BigDecimal) obj).doubleValue());
+      LOG.debug("Serializing {} as BigDecimal.", obj);
+      return bigDecimalToByteBuffer((BigDecimal)obj);
     } else if (obj instanceof Float) {
       LOG.debug("Serializing {} as Float.", obj);
       return floatToByteBuffer((Float) obj);
@@ -108,6 +108,19 @@ public class SerializerHelper {
 
   public static ByteBuffer bigIntegerToByteBuffer(BigInteger obj) {
     return ByteBuffer.wrap(obj.toByteArray());
+  }
+
+  public static ByteBuffer bigDecimalToByteBuffer(BigDecimal value) {
+    // copied from https://github.com/apache/cassandra/blob/trunk/src/java/org/apache/cassandra/serializers/DecimalSerializer.java
+    BigInteger bi = value.unscaledValue();
+    int scale = value.scale();
+    byte[] bibytes = bi.toByteArray();
+
+    ByteBuffer bytes = ByteBuffer.allocate(4 + bibytes.length);
+    bytes.putInt(scale);
+    bytes.put(bibytes);
+    bytes.rewind();
+    return bytes;
   }
 
   public static ByteBuffer booleanToByteBuffer(Boolean obj) {
