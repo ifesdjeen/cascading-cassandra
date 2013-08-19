@@ -134,6 +134,26 @@ public class SettingsHelper {
     return parseMappingSpecs(mappingSpecs, "!");
   }
 
+  public static String getSourceColumns(Map<String,Object> settings) {
+    if (settings.containsKey("source.columns")) {
+      return (String)settings.get("source.columns");
+    } else if (settings.containsKey("mappings.cqlValues")) {
+      Map<String,String> cqlValueMappings = getCqlValueMappings(settings);
+
+      StringBuilder s = new StringBuilder();
+      Iterator<String> i = cqlValueMappings.keySet().iterator();
+      while(i.hasNext()) {
+        s.append(i.next());
+        if (i.hasNext()) {
+          s.append(",");
+        }
+      }
+      return s.toString();
+    } else {
+      return null;
+    }
+  }
+
   public static String getSinkOutputCql(Map<String,Object> settings) {
     String cf = (String)settings.get("db.columnFamily");
     Map<String,String> valueMappings = getCqlValueMappings(settings);
@@ -151,4 +171,5 @@ public class SettingsHelper {
 
     return outputCql;
   }
+
 }
