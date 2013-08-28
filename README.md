@@ -114,9 +114,15 @@ the Apache Public License 2.0.
 
 # Thanks
 
-Thanks to (JetBrains)[http://www.jetbrains.com/] for providing a license
-for (IntelliJIDEA)[http://www.jetbrains.com/idea/] to develop part
-of this project developed in Java.
+* Thanks to (JetBrains)[http://www.jetbrains.com/] for providing a license
+  for (IntelliJIDEA)[http://www.jetbrains.com/idea/] to develop part
+  of this project developed in Java.
+
+* Thanks to YourKit for supporting cascading-cassandra with licenses for its full-featured Java Profiler.
+  YourKit, LLC is the creator of innovative and intelligent tools for profiling
+  Java and .NET applications. Take a look at YourKit's leading software products:
+    * (YourKit Java Profiler)[http://www.yourkit.com/java/profiler/index.jsp] and
+    * (YourKit .NET Profiler)[http://www.yourkit.com/.net/profiler/index.jsp].
 
 # Credits
 
