@@ -307,13 +307,10 @@
          [?value1 ?value2 ?value3]
          (test-data ?value1 ?value2 ?value3))
 
-    (let [res (select :libraries_cql_3_composite_partition_key)]
-      (is (= "Riak" (:name (first res))))
-      (is (= "Erlang" (:language (first res))))
-      (is (= 100 (:votes (first res))))
-      (is (= "Cassaforte" (:name (second res))))
-      (is (= "Clojure" (:language (second res))))
-      (is (= 150 (:votes (second res)))))))
+    (let [res (select :libraries_cql_3_composite_partition_key)
+          resmap (reduce (fn [r {:keys [name language votes]}] (assoc r name [language votes])) {} res)]
+      (is (= {"Riak" ["Erlang" 100]
+              "Cassaforte" ["Clojure" 150]} resmap)))))
 
 (deftest t-cassandra-tap-as-source-wide-compact-storage
   (dotimes [counter 100]
