@@ -62,7 +62,7 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
     if (this.settings.containsKey("source.CQLPageRowSize")) {
       CqlConfigHelper.setInputCQLPageRowSize(conf, (String) this.settings.get("source.CQLPageRowSize"));
     } else {
-      CqlConfigHelper.setInputCQLPageRowSize(conf, "100");
+      CqlConfigHelper.setInputCQLPageRowSize(conf, "10000");
     }
 
     if (this.settings.containsKey("source.whereClauses")) {
