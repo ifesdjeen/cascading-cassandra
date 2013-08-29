@@ -21,7 +21,7 @@ To use it as both source and sink, simply create a Schema:
 
 ```java
 import com.clojurewerkz.cascading.cassandra.CassandraTap;
-import com.clojurewerkz.cascading.cassandra.CassandraScheme;
+import com.clojurewerkz.cascading.cassandra.cql3.CassandraCQL3Scheme;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ mappings.put("db.host", "localhost");
 mappings.put("db.port", "9160");
 // And so on...
 
-CassandraScheme scheme = new CassandraScheme(settings);
+CassandraCQL3Scheme scheme = new CassandraCQL3Scheme(settings);
 CassandraTap tap = new CassandraTap(scheme);
 ```
 
@@ -44,40 +44,45 @@ you can use following code:
 
 (defn create-tap
   []
-  (let [keyspace      "keyspace"
-        column-family "column-family"
-        scheme        (CassandraScheme.
-                       {"sink.keyColumnName" "name"
-                        "db.host" "127.0.0.1"
+  (let [scheme        (CassandraCQL3Scheme.
+                       {"db.host" "127.0.0.1"
                         "db.port" "9160"
                         "db.keyspace" "cascading_cassandra"
                         "db.inputPartitioner" "org.apache.cassandra.dht.Murmur3Partitioner"
-                        "db.outputPartitioner" "org.apache.cassandra.dht.Murmur3Partitioner"})
+                        "db.outputPartitioner" "org.apache.cassandra.dht.Murmur3Partitioner"
+                        "db.columnFamily" "column_family"
+                        "mappings.cqlKeys" ["id" "version:?ver"]
+                        "mappings.cqlValues" ["date" "count:?count"]
+                        "types" {"id"      "UTF8Type"
+                                 "version" "Int32Type"
+                                 "date"    "DateType"
+                                 "count"   "DecimalType"}})
         tap           (CassandraTap. scheme)]
     tap))
 ```
 
 # Possible mappings:
 
-DB:
+### DB:
   * `db.host` - host of the database to connect to
   * `db.port` - port of the database to connect to
   * `db.keyspace` - keyspace to use for sink or source
-  * `db.columnFamily` - column family  to use for sink or source
   * `db.inputPartitioner` - partitiner for DB used as source
   * `db.outputPartitioner` - partitiner for DB used as sink
+  * `db.columnFamily` - column family  to use for sink or source
 
-Source:
-  * `source.columns` - columns for the source, to be fetched
-  * `source.useWideRows` - wether or not to use wide rows deserialization
-  * `source.types` - data types to use for deserialization.
-    * Examplpe for wide columns: `{"key", "UTF8Type", "value" "Int32Type"}`
-    * Example for static columns: `{"column1" "UTF8Type" "column2" "Int32Type"`
+### Source:
+  * `mappings.cqlKeys`   - primary-key columns
+  * `mappings.cqlValues` - value columns
+  * `types` - map of c* column names to c* column types to use for deserialization.
 
-Sink:
-  * `sink.keyColumnName` - key column name for sink
-  * `sink.outputMappings` - output mappings for sink, used to map internal Cascading
-    tuple segment names to database columns.
+Sourced tuples will contain the primary-key columns followed by the value columns
+
+### Sink:
+  * `mappings.cqlKeys`   - primary key column mappings in form "<c*-col-name>[:<cascalog-var>]"
+  * `mappings.cqlValues` - value column mappings in form "<c*-col-name>[:<cascalog-var>]"
+
+If cascalog vars are omitted from mappings, they default to ?<c*-col-name> for primary-key columns, and to !<c*-col-name> for value columns
 
 # Dependency
 
