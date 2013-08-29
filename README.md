@@ -79,10 +79,10 @@ you can use following code:
 Sourced tuples will contain the primary-key columns followed by the value columns
 
 ### Sink:
-  * `mappings.cqlKeys`   - primary key column mappings in form "<c*-col-name>[:<cascalog-var>]"
-  * `mappings.cqlValues` - value column mappings in form "<c*-col-name>[:<cascalog-var>]"
+  * `mappings.cqlKeys`   - primary key column mappings in form `<c*-col-name>[:<cascalog-var>]`
+  * `mappings.cqlValues` - value column mappings in form `<c*-col-name>[:<cascalog-var>]`
 
-If cascalog vars are omitted from mappings, they default to ?<c*-col-name> for primary-key columns, and to !<c*-col-name> for value columns
+If cascalog vars are omitted from mappings, they default to `?<c*-col-name>` for primary-key columns, and to `!<c*-col-name>` for value columns
 
 # Dependency
 
