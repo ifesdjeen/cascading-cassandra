@@ -38,7 +38,11 @@ public class SerializerHelper {
 
       return objs;
     } else {
-      return t.compose(bb);
+      if (bb.remaining()>0) {
+        return t.compose(bb);
+      } else {
+        return null;
+      }
     }
   }
 
