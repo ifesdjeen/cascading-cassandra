@@ -67,7 +67,7 @@ public abstract class BaseCassandraScheme extends Scheme<JobConf, RecordReader, 
     }
 
     if (this.settings.containsKey("source.inputSplitSize")) {
-      ConfigHelper.setRangeBatchSize(conf, (Integer) this.settings.get("source.inputSplitSize"));
+      ConfigHelper.setInputSplitSize(conf, (Integer) this.settings.get("source.inputSplitSize"));
     }
 
     if (this.settings.containsKey("cassandra.inputPartitioner")) {
