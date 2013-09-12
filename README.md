@@ -110,12 +110,12 @@ Jar is hosted on Clojars: https://clojars.org/cascading-cassandra
 
 # License
 
-Copyright (C) 2011-2013 Alex Petrov
+Copyright (C) 2011-2013 Alex Petrov, Craig McMillan
 
 Double licensed under the Eclipse Public License (the same as Clojure) or
 the Apache Public License 2.0.
 
-[Other Contributors](github.com/ifesdjeen/cascading-cassandra)
+[Other Contributors](github.com/ifesdjeen/cascading-cassandra/contributors)
 
 # Thanks
 
