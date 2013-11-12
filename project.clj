@@ -4,7 +4,7 @@
   :min-lein-version "2.0.0"
   :license {:name "Double licensed under the Eclipse Public License (the same as Clojure) or the Apache Public License 2.0."}
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [cascalog "1.10.1"]]
+                 [cascalog "2.0.0"]]
   :aot               [com.ifesdjeen.cascading.cassandra.core-test]
   :plugins [[lein-idea "1.0.1"]]
   :javac-options ["-target" "1.6" "-source" "1.6" "-Xlint:-options"]
@@ -13,11 +13,11 @@
   :resource-paths    ["src/resources"]
   :profiles {:provided {:dependencies   [[mccraigmccraig/cassandra-all "1.2.8-SNAPSHOT"
                                           :exclusions [org.apache.hadoop
-                                                       org.apache.thrift/libthrift
+                                                       ;; org.apache.thrift/libthrift
                                                        org.apache.httpcomponents/httpclient]]
                                          ;; [org.apache.hadoop/hadoop-core "1.0.4"
                                          ;;   :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
-                                         [org.apache.hadoop/hadoop-core "0.20.2"
+                                         [org.apache.hadoop/hadoop-core "1.1.2"
                                           :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
                                          ]}
              :dev      {:resource-paths ["src/resources"]

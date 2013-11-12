@@ -6,8 +6,7 @@
         clojurewerkz.cassaforte.query
         [midje sweet cascalog])
   (:require [com.ifesdjeen.cascading.cassandra.test-helpers :as th]
-            [cascalog.io :as io]
-            [cascalog.ops :as c])
+            [cascalog.logic.ops :as c])
   (:import [cascading.tuple Fields]
            [cascading.scheme Scheme]
            [com.ifesdjeen.cascading.cassandra CassandraTap CassandraScheme]
