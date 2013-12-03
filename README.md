@@ -96,6 +96,8 @@ If you're not familiar with Static / Dynamic terminology, please refer to [this 
 
   * `types.dynamic` - hashmap specifying mapping of `rowKey` to it's type, `columnName` to it's type
     and `columnValue` to it's type
+  * `mappings.dynamic` - hashmap specifying mapping of `rowKey`, `columnName` and `columnValue` to
+    the fields that correspond to them in Cascading output
 
 Please note that only given configuration parameters are valid for usage, you can not create a single
 universal dynamic/static Source/Sink.
@@ -303,6 +305,15 @@ types.put("columnValue", "UTF8Type"); // This is the type of your value
 // You will get a triplet of <row key>, <column name>, <column value> in return from Cascading
 
 config.put("types.dynamic", types);
+
+// Specify sink column mappings, this is required to map your Cascalog fields (right ones) to
+// Internal Cassandra fields (left)
+Map<String, String> mappings = new HashMap<>();
+mappings.put("rowKey",      "?value1");
+mappings.put("columnName",  "?value2");
+mappings.put("columnValue", "?value3");
+
+config.put("mappings.dynamic", mappings);
 
 CassandraScheme scheme = new CassandraScheme(config);
 CassandraTap tap = new CassandraTap(scheme);
