@@ -1,11 +1,11 @@
-(defproject cascading-cassandra "1.0.0-rc6"
+(defproject cascading-cassandra "1.0.0-rc7"
   :description "Modern Cassandra tap for Cascading. Actually works with Cascading 2.0 and Cascalog 1.10."
   :url "https://github.com/ifesdjeen/cascading-cassandra"
   :min-lein-version "2.0.0"
   :license {:name "Double licensed under the Eclipse Public License (the same as Clojure) or the Apache Public License 2.0."}
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [cascalog "1.10.1"]]
-  :aot           [com.ifesdjeen.cascading.cassandra.core-test]
+  ;; :aot           [com.ifesdjeen.cascading.cassandra.core-test]
   :javac-options ["-target" "1.7" "-source" "1.7" "-Xlint:-options"]
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
