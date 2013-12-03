@@ -91,4 +91,11 @@
                                      :votes :int
                                      :primary-key [:name :language :votes]}))
 
+  (create-table :time_series_wide
+                (with {:compact-storage true})
+                (column-definitions {:name :varchar
+                                     :ts :timestamp
+                                     :votes :int
+                                     :primary-key [:name :ts]}))
+
   (f))

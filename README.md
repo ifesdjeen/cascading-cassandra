@@ -15,7 +15,7 @@ driver, but are generic enough and go in elaborate details on all Cassandra-rela
 [Counters](http://clojurecassandra.info/articles/kv.html#toc_5) and many many more.
 
 
-# Usage
+## Usage
 
 To use it as both source and sink, simply create a Schema:
 
@@ -61,7 +61,7 @@ you can use following code:
     tap))
 ```
 
-# Possible mappings:
+## Possible mappings:
 
 ### DB:
   * `db.host` - host of the database to connect to
@@ -71,30 +71,254 @@ you can use following code:
   * `db.outputPartitioner` - partitiner for DB used as sink
   * `db.columnFamily` - column family  to use for sink or source
 
-### Source:
-  * `mappings.cqlKeys`   - primary-key columns
-  * `mappings.cqlValues` - value columns
-  * `types` - map of c* column names to c* column types to use for deserialization.
+If you're not familiar with Static / Dynamic terminology, please refer to [this guide](http://clojurecassandra.info/articles/data_modelling.html)
 
-Sourced tuples will contain the primary-key columns followed by the value columns
+### Static Row Source:
 
-### Sink:
-  * `mappings.cqlKeys`   - primary key column mappings in form `<c*-col-name>[:<cascalog-var>]`
-  * `mappings.cqlValues` - value column mappings in form `<c*-col-name>[:<cascalog-var>]`
+  * `types` - hashmap specifying type (e.q. `UTF8Type` of each column)
+  * `mappings.source` - a `List<String>` (list of strings) specifying, in an order items are appearing
+    in Cascading output, mappings of values to corresponding Cassandra fields
+
+### Static Row Sink:
+
+  * `types` - hashmap specifying type (e.q. `UTF8Type` of each column)
+  * `mappings.rowKey` - row key (name of your partition key from Cassandra), so that Tap would know
+    which key to use as a partition key
+
+### Dynamic Row Source
+
+  * `types.dynamic` - hashmap specifying mapping of `rowKey` to it's type, `columnName` to it's type
+    and `columnValue` to it's type
+  * `mappings.dynamic` - hashmap specifying mapping of `rowKey`, `columnName` and `columnValue` to
+    the fields that correspond to them in Cascading output
+
+### Dynamic Row Sink:
+
+  * `types.dynamic` - hashmap specifying mapping of `rowKey` to it's type, `columnName` to it's type
+    and `columnValue` to it's type
+
+Please note that only given configuration parameters are valid for usage, you can not create a single
+universal dynamic/static Source/Sink.
 
 If cascalog vars are omitted from mappings, they default to `?<c*-col-name>` for primary-key columns, and to `!<c*-col-name>` for value columns
 
-# Dependency
+## Using Static (narrow) tables
+
+If you're working with datasets that have a non-compound key, it's called "Static Table".
+For example, you have a table that stores user data, where users are accessed by unique name
+identifier.
+
+Let's say you have a table called "Libraries":
+
+```sql
+CREATE TABLE users (name varchar,
+                    language varchar,
+                    schmotes int,
+                    votes int,
+                    PRIMARY KEY (name))
+WITH COMPACT STORAGE;
+```
+
+Typically, data in such table looks like:
+
+```
+| :name               | :language |   :votes |
+|---------------------+-----------+----------|
+| Cassaforte          | Clojure   |       10 |
+| Cascading Cassandra | Java      |       20 |
+| Langohr             | Clojure   |       12 |
+```
+
+### Using Static Row Source Tap
+
+In order to query data from it, you should:
+
+  * specify `columnFamily`
+  * specify types mappings
+  * specify order for non-key (data) columns:
+
+```java
+Map<String, Object> config = new HashMap<>();
+// Default Settings
+config.put("db.host", "127.0.0.1");
+config.put("db.port", "19160");
+config.put("db.keyspace", "cascading_cassandra");
+config.put("db.inputPartitioner", "org.apache.cassandra.dht.Murmur3Partitioner");
+config.put("db.outputPartitioner", "org.apache.cassandra.dht.Murmur3Partitioner");
+
+//Example-specific settings
+config.put("db.columnFamily", "libraries");
+
+// Put mappings of types, specifying which source field has which type
+Map<String, String> types = new HashMap<>();
+types.put("name",      "UTF8Type");
+types.put("language",  "UTF8Type");
+types.put("schmotes",  "Int32Type");
+types.put("votes",     "Int32Type");
+config.put("types", types);
+
+// Configure input columns in an order they should appear in client code
+config.put("mappings.source", Arrays.asList("language", "schmotes", "votes"));
+
+CassandraScheme scheme = new CassandraScheme(config);
+CassandraTap tap = new CassandraTap(scheme);
+```
+
+### Using Static Row Sink Tap
+
+In order to sink items into the Cascading, you should specify
+
+  * type mappings
+  * name of the row key
+  * mappings of columns for sinking
+
+```java
+Map<String, Object> config = new HashMap<>();
+// Default Settings
+config.put("db.host", "127.0.0.1");
+config.put("db.port", "19160");
+config.put("db.keyspace", "cascading_cassandra");
+config.put("db.inputPartitioner", "org.apache.cassandra.dht.Murmur3Partitioner");
+config.put("db.outputPartitioner", "org.apache.cassandra.dht.Murmur3Partitioner");
+
+//Example-specific settings
+config.put("db.columnFamily", "libraries_wide");
+
+// Put mappings of types, specifying which source field has which type
+Map<String, String> types = new HashMap<>();
+types.put("name",      "UTF8Type");
+types.put("language",  "UTF8Type");
+types.put("schmotes",  "UTF8Type");
+types.put("votes",     "Int32Type");
+
+config.put("types", types);
+
+// Specify a row key, so that Tap would know which key to use as a partition key
+config.put("mappings.rowKey", "name");
+
+// Specify sink column mappings, this is required to map your Cascalog fields (right ones) to
+// Internal Cassandra fields (left)
+Map<String, String> mappings = new HashMap<>();
+mappings.put("name",      "?value1");
+mappings.put("language",  "?value2");
+mappings.put("schmotes",  "?value3");
+mappings.put("votes",     "?value4");
+
+config.put("mappings.sink", mappings);
+
+CassandraScheme scheme = new CassandraScheme(config);
+CassandraTap tap = new CassandraTap(scheme);
+```
+
+## Using Dynamic (wide) Rows
+
+In current Cassandra terminology, term Compound Key is used to describe entries that
+are identified by the set of keys. This terms is used to avoid ambiguity with
+Composite Columns that were used in previous versions of Cassandra.
+
+Queries with locked partition key are not expensive, since you can guarantee that
+things that have same partition key will be located on the same node.
+
+```sql
+CREATE TABLE libraries_wide (name varchar
+                             language :varchar
+                             votes int
+                             PRIMARY KEY (name, language))
+WITH COMPACT STORAGE;
+```
+
+### Using Wide Rows
+
+In order to use Dynamic wide row sources, you should use different mappings (due
+to the fact that an internal implementation is entirely different from static row
+sources.
+
+### Using Wide Row Source Tap
+
+For that, you'll have to specify
+
+  * row key type
+  * column name type
+  * column value type
+  * mappings from cascading triplet names to row key, column name and column value in Cassandra
+
+```java
+Map<String, Object> config = new HashMap<>();
+// Default Settings
+config.put("db.host", "127.0.0.1");
+config.put("db.port", "19160");
+config.put("db.keyspace", "cascading_cassandra");
+config.put("db.inputPartitioner", "org.apache.cassandra.dht.Murmur3Partitioner");
+config.put("db.outputPartitioner", "org.apache.cassandra.dht.Murmur3Partitioner");
+
+//Example-specific settings
+config.put("db.columnFamily", "libraries_wide");
+
+// Put mappings of types, specifying which source field has which type
+Map<String, String> types = new HashMap<>();
+types.put("rowKey",      "UTF8Type");
+types.put("columnName",  "UTF8Type");
+types.put("columnValue", "Int32Type");
+
+config.put("types.dynamic", types);
+
+// Specify sink column mappings, this is required to map your Cascalog fields (right ones) to
+// Internal Cassandra fields (left)
+Map<String, String> mappings = new HashMap<>();
+mappings.put("rowKey",      "?value1");
+mappings.put("columnName",  "?value2");
+mappings.put("columnValue", "?value3");
+
+config.put("mappings.dynamic", mappings);
+
+CassandraScheme scheme = new CassandraScheme(config);
+CassandraTap tap = new CassandraTap(scheme);
+```
+
+### Using Wide Row Sink Tap
+
+For that, you'll have to specify
+
+  * a row key (partition key) name and type
+  * a column name (whatever is going to play a role of column name in dynamic table) type
+  * a value type
+
+```java
+Map<String, Object> config = new HashMap<>();
+// Default Settings
+config.put("db.host", "127.0.0.1");
+config.put("db.port", "19160");
+config.put("db.keyspace", "cascading_cassandra");
+config.put("db.inputPartitioner", "org.apache.cassandra.dht.Murmur3Partitioner");
+config.put("db.outputPartitioner", "org.apache.cassandra.dht.Murmur3Partitioner");
+
+//Example-specific settings
+config.put("db.columnFamily", "libraries_wide");
+
+// Put mappings of types, specifying which source field has which type
+Map<String, String> types = new HashMap<>();
+types.put("rowKey",      "UTF8Type"); // This is your primary (partition) key, first key in sequence
+types.put("columnName",  "DateType"); // This is your column name (second part of the key, if the key's not compound)
+types.put("columnValue", "UTF8Type"); // This is the type of your value
+// You will get a triplet of <row key>, <column name>, <column value> in return from Cascading
+
+config.put("types.dynamic", types);
+
+CassandraScheme scheme = new CassandraScheme(config);
+CassandraTap tap = new CassandraTap(scheme);
+```
+
+## Dependency Information
 
 Jar is hosted on Clojars: https://clojars.org/cascading-cassandra
 
-## Leiningen
+### Leiningen
 
 ```clojure
 [cascading-cassandra "1.0.0-rc5"]
 ```
 
-## Maven
+### Maven
 
 ```xml
 <dependency>
@@ -104,11 +328,11 @@ Jar is hosted on Clojars: https://clojars.org/cascading-cassandra
 </dependency>
 ```
 
-# This project supports the ClojureWerkz goals
+## This project supports the ClojureWerkz goals
 
 [ClojureWerkz](http://clojurewerkz.org/) is a growing collection of open-source, **batteries-included Clojure libraries** that emphasise modern targets, great documentation, and thorough testing. They've got a ton of great stuff, check 'em out!
 
-# License
+## License
 
 Copyright (C) 2011-2013 Alex Petrov, Craig McMillan
 
@@ -117,14 +341,14 @@ the Apache Public License 2.0.
 
 [Other Contributors](github.com/ifesdjeen/cascading-cassandra/contributors)
 
-# Thanks
+## Thanks
 
-* Thanks to [JetBrains](http://www.jetbrains.com/) for providing a license
-  for [IntelliJIDEA](http://www.jetbrains.com/idea/) to develop part
-  of this project developed in Java.
+  * Thanks to [JetBrains](http://www.jetbrains.com/) for providing a license
+    for [IntelliJIDEA](http://www.jetbrains.com/idea/) to develop part
+    of this project developed in Java.
 
-* Thanks to YourKit for supporting cascading-cassandra with licenses for its full-featured Java Profiler.
-  YourKit, LLC is the creator of innovative and intelligent tools for profiling
-  Java and .NET applications. Take a look at YourKit's leading software products:
-    * [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp) and
-    * [YourKit .NET Profiler](http://www.yourkit.com/.net/profiler/index.jsp).
+  * Thanks to YourKit for supporting cascading-cassandra with licenses for its full-featured Java Profiler.
+    YourKit, LLC is the creator of innovative and intelligent tools for profiling
+    Java and .NET applications. Take a look at YourKit's leading software products:
+      * [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp) and
+      * [YourKit .NET Profiler](http://www.yourkit.com/.net/profiler/index.jsp).

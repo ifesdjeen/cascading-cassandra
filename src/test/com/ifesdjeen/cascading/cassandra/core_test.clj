@@ -18,10 +18,10 @@
 
 (defn create-tap
   [conf]
-  (let [defaults      {"db.host" "127.0.0.1"
-                       "db.port" "19160"
-                       "db.keyspace" "cascading_cassandra"
-                       "db.inputPartitioner" "org.apache.cassandra.dht.Murmur3Partitioner"
+  (let [defaults      {"db.host"              "127.0.0.1"
+                       "db.port"              "19160"
+                       "db.keyspace"          "cascading_cassandra"
+                       "db.inputPartitioner"  "org.apache.cassandra.dht.Murmur3Partitioner"
                        "db.outputPartitioner" "org.apache.cassandra.dht.Murmur3Partitioner"}
         scheme        (CassandraScheme. (merge defaults conf))
         tap           (CassandraTap. scheme)]
@@ -32,15 +32,15 @@
   (dotimes [counter 100]
     (client/prepared
      (insert :libraries
-             {:name (str "Cassaforte" counter)
+             {:name     (str "Cassaforte" counter)
               :language (str "Clojure" counter)
               :schmotes (int counter)
-              :votes (int (* 2 counter))})))
+              :votes    (int (* 2 counter))})))
   (let [tap (create-tap {"db.columnFamily" "libraries"
-                         "types" {"name"      "UTF8Type"
-                                  "language"  "UTF8Type"
-                                  "schmotes"  "Int32Type"
-                                  "votes"     "Int32Type"}
+                         "types"           {"name"      "UTF8Type"
+                                            "language"  "UTF8Type"
+                                            "schmotes"  "Int32Type"
+                                            "votes"     "Int32Type"}
                          "mappings.source" ["language" "schmotes" "votes"]})
         query (<- [?count ?sum3 ?sum4]
                   (tap ?value1 ?value2 ?value3 ?value4)
@@ -59,10 +59,10 @@
               :schmotes (int counter)
               :votes (int (* 2 counter))})))
   (let [tap (create-tap {"db.columnFamily" "libraries"
-                         "types" {"name"      "UTF8Type"
-                                  "language"  "UTF8Type"
-                                  "schmotes"  "Int32Type"
-                                  "votes"     "Int32Type"}
+                         "types"           {"name"     "UTF8Type"
+                                            "language" "UTF8Type"
+                                            "schmotes" "Int32Type"
+                                            "votes"    "Int32Type"}
                          "mappings.source" ["votes" "language"]})
         query (<- [?count ?votes-sum]
                   (tap ?name-field ?votes-field ?language-field)
@@ -76,15 +76,15 @@
                    ["Cassaforte" "Clojure" (int 300) (int 400)]]]
 
     (?<- (create-tap {"db.columnFamily" "libraries"
-                      "types" {"name"      "UTF8Type"
-                               "language"  "UTF8Type"
-                               "schmotes"  "Int32Type"
-                               "votes"     "Int32Type"}
+                      "types"           {"name"      "UTF8Type"
+                                         "language"  "UTF8Type"
+                                         "schmotes"  "Int32Type"
+                                         "votes"     "Int32Type"}
                       "mappings.rowKey" "name"
-                      "mappings.sink" {"name"     "?value1"
-                                       "language" "?value2"
-                                       "schmotes" "?value3"
-                                       "votes"    "?value4"}})
+                      "mappings.sink"   {"name"     "?value1"
+                                         "language" "?value2"
+                                         "schmotes" "?value3"
+                                         "votes"    "?value4"}})
          [?value1 ?value2 ?value3 ?value4]
          (test-data ?value1 ?value2 ?value3 ?value4))
 
@@ -276,3 +276,53 @@
       (is (= "Cassaforte" (:name (second res))))
       (is (= "Clojure" (:language (second res))))
       (is (= 1 (:votes (second res)))))))
+
+
+
+
+(deftest t-timestamp-field-as-source-wide
+  (dotimes [counter 100]
+    (client/prepared
+     (insert :time_series_wide
+             {:name (str "Cassaforte" counter)
+              :ts (java.util.Date. (+ 1368284297000 counter))
+              :votes (int counter)})))
+
+  (let [tap (create-tap {"db.columnFamily" "time_series_wide"
+                         "types.dynamic" {"rowKey"      "UTF8Type"
+                                          "columnName"  "DateType"
+                                          "columnValue" "Int32Type"}})
+
+        query (<- [?count ?sum]
+                  (tap ?value1 ?value2 ?value3)
+                  (c/count ?count)
+                  (c/sum ?value3 :> ?sum))]
+
+    (fact "Handles simple calculations"
+          query
+          => (produces [[100 4950]]))))
+
+(deftest t-cassandra-tap-as-sink-wide
+  (let [test-data [["One" (java.util.Date. 1368284297000) (int 100)]
+                   ["Two" (java.util.Date. 1368284297050) (int 150)]]]
+
+    (?<- (create-tap {"db.columnFamily" "time_series_wide"
+                      "types.dynamic" {"rowKey"      "UTF8Type"
+                                       "columnName"  "DateType"
+                                       "columnValue" "Int32Type"}
+
+                      "mappings.dynamic" {"rowKey"      "?value1"
+                                          "columnName"  "?value2"
+                                          "columnValue" "?value3"}})
+         [?value1 ?value2 ?value3]
+         (test-data ?value1 ?value2 ?value3))
+
+    (let [res (select :time_series_wide)]
+      (is (= "One" (:name (first res))))
+      (is (= "Two" (:name (second res))))
+
+      (is (= (java.util.Date. 1368284297000) (:ts (first res))))
+      (is (= (java.util.Date. 1368284297050) (:ts (second res))))
+
+      (is (= (int 100) (:votes (first res))))
+      (is (= (int 150) (:votes (second res)))))))

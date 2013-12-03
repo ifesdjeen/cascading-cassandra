@@ -5,9 +5,8 @@
   :license {:name "Double licensed under the Eclipse Public License (the same as Clojure) or the Apache Public License 2.0."}
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [cascalog "1.10.1"]]
-  :aot               [com.ifesdjeen.cascading.cassandra.core-test]
-  :plugins [[lein-idea "1.0.1"]]
-  :javac-options ["-target" "1.6" "-source" "1.6" "-Xlint:-options"]
+  :aot           [com.ifesdjeen.cascading.cassandra.core-test]
+  :javac-options ["-target" "1.7" "-source" "1.7" "-Xlint:-options"]
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
   :resource-paths    ["src/resources"]
@@ -26,7 +25,7 @@
                                          "-javaagent:lib/jamm-0.2.5.jar"
                                          "-Xmx768m"]
                         :dependencies   [[org.xerial.snappy/snappy-java "1.0.5-M3"]
-                                         [clojurewerkz/cassaforte "1.2.0-SNAPSHOT"
+                                         [clojurewerkz/cassaforte "1.2.0"
                                           :exclusions [org.apache.thrift/libthrift
                                                        org.apache.cassandra/cassandra-all]]
                                          [commons-lang/commons-lang "2.6"]]}}

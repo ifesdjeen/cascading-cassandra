@@ -223,6 +223,4 @@ public class CassandraScheme extends BaseCassandraScheme {
       throw new RuntimeException(e);
     }
   }
-
-
 }
