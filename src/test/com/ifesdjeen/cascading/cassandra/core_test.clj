@@ -4,14 +4,10 @@
         clojure.test
         clojurewerkz.cassaforte.cql
         clojurewerkz.cassaforte.query
-        [midje sweet cascalog])
+        cascalog.logic.testing)
   (:require [com.ifesdjeen.cascading.cassandra.test-helpers :as th]
             [cascalog.logic.ops :as c])
-  (:import [cascading.tuple Fields]
-           [cascading.scheme Scheme]
-           [com.ifesdjeen.cascading.cassandra CassandraTap CassandraScheme]
-           [org.apache.cassandra.utils ByteBufferUtil]
-           [org.apache.cassandra.thrift Column]))
+  (:import [com.ifesdjeen.cascading.cassandra CassandraTap CassandraScheme]))
 
 (use-fixtures :each th/initialize!)
 
@@ -40,14 +36,14 @@
                                             "language"  "UTF8Type"
                                             "schmotes"  "Int32Type"
                                             "votes"     "Int32Type"}
-                         "mappings.source" ["language" "schmotes" "votes"]})
-        query (<- [?count ?sum3 ?sum4]
-                  (tap ?value1 ?value2 ?value3 ?value4)
-                  (c/count ?count)
-                  (c/sum ?value3 :> ?sum3)
-                  (c/sum ?value4 :> ?sum4))]
+                         "mappings.source" ["language" "schmotes" "votes"]})]
 
-    (fact query => (produces [[100 4950 9900]]))))
+    (test?<- [[100 4950 9900]]
+             [?count ?sum3 ?sum4]
+             (tap ?value1 ?value2 ?value3 ?value4)
+             (c/count ?count)
+             (c/sum ?value3 :> ?sum3)
+             (c/sum ?value4 :> ?sum4))))
 
 (deftest t-cassandra-tap-as-source-different-mapping
   (dotimes [counter 100]
@@ -62,13 +58,12 @@
                                             "language" "UTF8Type"
                                             "schmotes" "Int32Type"
                                             "votes"    "Int32Type"}
-                         "mappings.source" ["votes" "language"]})
-        query (<- [?count ?votes-sum]
-                  (tap ?name-field ?votes-field ?language-field)
-                  (c/count ?count)
-                  (c/sum ?votes-field :> ?votes-sum))]
-
-    (fact query => (produces [[100 9900]]))))
+                         "mappings.source" ["votes" "language"]})]
+    (test?<- [[100 9900]]
+             [?count ?votes-sum]
+             (tap ?name-field ?votes-field ?language-field)
+             (c/count ?count)
+             (c/sum ?votes-field :> ?votes-sum))))
 
 (deftest t-cassandra-tap-as-sink
   (let [test-data [["Riak" "Erlang" (int 100) (int 200)]
@@ -109,14 +104,12 @@
   (let [tap (create-tap {"db.columnFamily" "libraries_wide"
                          "types.dynamic" {"rowKey"      "UTF8Type"
                                           "columnName"  "UTF8Type"
-                                          "columnValue" "Int32Type"}})
-        query (<- [?count ?sum]
-                  (tap ?value1 ?value2 ?value3)
-                  (c/count ?count)
-                  (c/sum ?value3 :> ?sum))]
-    (fact "Handles simple calculations"
-          query
-          => (produces [[100 4950]]))))
+                                          "columnValue" "Int32Type"}})]
+    (test?<- [[100 4950]]
+             [?count ?sum]
+             (tap ?value1 ?value2 ?value3)
+             (c/count ?count)
+             (c/sum ?value3 :> ?sum))))
 
 (deftest t-cassandra-tap-as-sink-wide
   (let [test-data [["Riak" "Erlang" (int 100)]
@@ -149,14 +142,12 @@
   (let [tap (create-tap {"db.columnFamily" "libraries_wide_empty_value"
                          "types.dynamic" {"rowKey"      "UTF8Type"
                                           "columnName"  "Int32Type"
-                                          "columnValue" nil}})
-        query (<- [?count ?sum]
-                  (tap ?value1 ?value2)
-                  (c/count ?count)
-                  (c/sum ?value2 :> ?sum))]
-    (fact "Handles simple calculations"
-      query
-      => (produces [[100 4950]]))))
+                                          "columnValue" nil}})]
+    (test?<- [[100 4950]]
+             [?count ?sum]
+             (tap ?value1 ?value2)
+             (c/count ?count)
+             (c/sum ?value2 :> ?sum))))
 
 (deftest t-cassandra-tap-as-sink-wide-empty-value
   (let [test-data [["Riak" (int 100)]
@@ -192,15 +183,13 @@
 
                          "types.dynamic" {"rowKey"      "UTF8Type"
                                           "columnName"  "CompositeType(UTF8Type, Int32Type)"
-                                          "columnValue" "Int32Type"}})
-        query (<- [?count ?version-sum ?votes-sum]
-                  (tap ?value1 ?value2 ?value3 ?value4)
-                  (c/count ?count)
-                  (c/sum ?value3 :> ?version-sum)
-                  (c/sum ?value4 :> ?votes-sum))]
-    (fact "Handles simple calculations"
-      query
-      => (produces [[100 500 4950]]))))
+                                          "columnValue" "Int32Type"}})]
+    (test?<- [[100 500 4950]]
+        [?count ?version-sum ?votes-sum]
+                   (tap ?value1 ?value2 ?value3 ?value4)
+                   (c/count ?count)
+                   (c/sum ?value3 :> ?version-sum)
+                   (c/sum ?value4 :> ?votes-sum))))
 
 (deftest t-cassandra-tap-as-sink-wide-composite
   (let [test-data [["Riak" "Erlang" (int 5) (int 100)]
@@ -240,14 +229,12 @@
 
                          "types.dynamic" {"rowKey"      "UTF8Type"
                                           "columnName"  "CompositeType(UTF8Type, Int32Type)"
-                                          "columnValue" nil}})
-        query (<- [?count ?votes-sum]
-                  (tap ?value1 ?value2 ?value3)
-                  (c/count ?count)
-                  (c/sum ?value3 :> ?votes-sum))]
-    (fact "Handles simple calculations"
-      query
-      => (produces [[100 4950]]))))
+                                          "columnValue" nil}})]
+    (test?<- [[100 4950]]
+     [?count ?votes-sum]
+                   (tap ?value1 ?value2 ?value3)
+                   (c/count ?count)
+                   (c/sum ?value3 :> ?votes-sum))))
 
 
 
@@ -290,16 +277,13 @@
   (let [tap (create-tap {"db.columnFamily" "time_series_wide"
                          "types.dynamic" {"rowKey"      "UTF8Type"
                                           "columnName"  "DateType"
-                                          "columnValue" "Int32Type"}})
+                                          "columnValue" "Int32Type"}})]
 
-        query (<- [?count ?sum]
-                  (tap ?value1 ?value2 ?value3)
-                  (c/count ?count)
-                  (c/sum ?value3 :> ?sum))]
-
-    (fact "Handles simple calculations"
-          query
-          => (produces [[100 4950]]))))
+    (test?<- [[100 4950]]
+             [?count ?sum]
+             (tap ?value1 ?value2 ?value3)
+             (c/count ?count)
+             (c/sum ?value3 :> ?sum))))
 
 (deftest t-cassandra-tap-as-sink-wide
   (let [test-data [["One" (java.util.Date. 1368284297000) (int 100)]

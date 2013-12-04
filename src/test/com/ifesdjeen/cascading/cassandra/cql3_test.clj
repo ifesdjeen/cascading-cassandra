@@ -2,17 +2,13 @@
   (:require [clojurewerkz.cassaforte.client :as client])
   (:use cascalog.api
         clojure.test
+        cascalog.logic.testing
         clojurewerkz.cassaforte.cql
-        clojurewerkz.cassaforte.query
-        [midje sweet cascalog])
+        clojurewerkz.cassaforte.query)
   (:require [com.ifesdjeen.cascading.cassandra.test-helpers :as th]
             [cascalog.logic.ops :as c])
-  (:import [cascading.tuple Fields]
-           [cascading.scheme Scheme]
-           [com.ifesdjeen.cascading.cassandra CassandraTap]
-           [com.ifesdjeen.cascading.cassandra.cql3 CassandraCQL3Scheme]
-           [org.apache.cassandra.utils ByteBufferUtil]
-           [org.apache.cassandra.thrift Column]))
+  (:import [com.ifesdjeen.cascading.cassandra CassandraTap]
+           [com.ifesdjeen.cascading.cassandra.cql3 CassandraCQL3Scheme]))
 
 (use-fixtures :each th/initialize!)
 
@@ -39,14 +35,13 @@
                          "types" {"name"      "UTF8Type"
                                   "language"  "UTF8Type"
                                   "schmotes"  "Int32Type"
-                                  "votes"     "Int32Type"}})
-        query (<- [?count ?sum3 ?sum4]
-                  (tap ?value1 ?value2 ?value3 ?value4)
-                  (c/count ?count)
-                  (c/sum ?value3 :> ?sum3)
-                  (c/sum ?value4 :> ?sum4))]
-
-    (fact query => (produces [[100 4950 9900]]))))
+                                  "votes"     "Int32Type"}})]
+    (test?<- [[100 4950 9900]]
+     [?count ?sum3 ?sum4]
+                   (tap ?value1 ?value2 ?value3 ?value4)
+                   (c/count ?count)
+                   (c/sum ?value3 :> ?sum3)
+                   (c/sum ?value4 :> ?sum4))))
 
 (deftest t-cassandra-tap-compact-storage-with-columns
   (dotimes [counter 100]
@@ -59,15 +54,12 @@
   (let [tap (create-tap {"db.columnFamily" "libraries"
                          "source.columns" "votes"
                          "types" {"name"      "UTF8Type"
-                                  "votes"     "Int32Type"}})
-        query (<- [?count ?sum]
-                   (tap _ ?value1)
-                   (c/count ?count)
-                   (c/sum ?value1 :> ?sum))]
-
-    (fact "Handles simple calculations"
-          query
-          => (produces [[100 4950]]))))
+                                  "votes"     "Int32Type"}})]
+    (test?<- [[100 4950]]
+             [?count ?sum]
+             (tap _ ?value1)
+             (c/count ?count)
+             (c/sum ?value1 :> ?sum))))
 
 (deftest t-tap-as-source-normal
   (dotimes [counter 100]
@@ -81,14 +73,13 @@
                          "types" {"name"      "UTF8Type"
                                   "language"  "UTF8Type"
                                   "schmotes"  "Int32Type"
-                                  "votes"     "Int32Type"}})
-        query (<- [?count ?sum3 ?sum4]
-                  (tap ?value1 ?value2 ?value3 ?value4)
-                  (c/count ?count)
-                  (c/sum ?value3 :> ?sum3)
-                  (c/sum ?value4 :> ?sum4))]
-
-    (fact query => (produces [[100 4950 9900]]))))
+                                  "votes"     "Int32Type"}})]
+    (test?<- [[100 4950 9900]]
+             [?count ?sum3 ?sum4]
+             (tap ?value1 ?value2 ?value3 ?value4)
+             (c/count ?count)
+             (c/sum ?value3 :> ?sum3)
+             (c/sum ?value4 :> ?sum4))))
 
 (deftest t-tap-as-source-normal-with-mappings-cols
   (dotimes [counter 100]
@@ -103,13 +94,12 @@
                          "types" {"name"      "UTF8Type"
                                   "language"  "UTF8Type"
                                   "schmotes"  "Int32Type"
-                                  "votes"     "Int32Type"}})
-        query (<- [?count ?sum-schmotes]
-                  (tap ?name ?schmotes ?language)
-                  (c/count ?count)
-                  (c/sum ?schmotes :> ?sum-schmotes))]
-
-    (fact query => (produces [[100 4950]]))))
+                                  "votes"     "Int32Type"}})]
+    (test?<- [[100 4950]]
+             [?count ?sum-schmotes]
+             (tap ?name ?schmotes ?language)
+             (c/count ?count)
+             (c/sum ?schmotes :> ?sum-schmotes))))
 
 (defn orf
   [& args]
@@ -127,17 +117,14 @@
                          "types" {"name"      "UTF8Type"
                                   "language"  "UTF8Type"
                                   "schmotes"  "Int32Type"
-                                  "votes"     "Int32Type"}})
-        query (<- [?count ?sum3 ?sum4]
-                  (tap ?value1 ?value2 ?value3 !value4)
-                  (c/count ?count)
-                  (c/sum ?value3 :> ?sum3)
-                  (orf !value4 0 :> ?value4)
-                  (c/sum ?value4 :> ?sum4))]
-
-    ;;(fact (??- query) => [[[100 4950 0]]])
-    (fact query => (produces [[100 4950 0]]))
-    ))
+                                  "votes"     "Int32Type"}})]
+    (test?<- [[100 4950 0]]
+             [?count ?sum3 ?sum4]
+             (tap ?value1 ?value2 ?value3 !value4)
+             (c/count ?count)
+             (c/sum ?value3 :> ?sum3)
+             (orf !value4 0 :> ?value4)
+             (c/sum ?value4 :> ?sum4))))
 
 (deftest t-tap-as-source-normal-composite-key
   (dotimes [counter 100]
@@ -151,14 +138,13 @@
                          "types" {"name"      "UTF8Type"
                                   "language"  "UTF8Type"
                                   "schmotes"  "Int32Type"
-                                  "votes"     "Int32Type"}})
-        query (<- [?count ?sum3 ?sum4]
-                  (tap ?value1 ?value2 ?value3 ?value4)
-                  (c/count ?count)
-                  (c/sum ?value3 :> ?sum3)
-                  (c/sum ?value4 :> ?sum4))]
-
-    (fact query => (produces [[100 4950 9900]]))))
+                                  "votes"     "Int32Type"}})]
+    (test?<- [[100 4950 9900]]
+             [?count ?sum3 ?sum4]
+             (tap ?value1 ?value2 ?value3 ?value4)
+             (c/count ?count)
+             (c/sum ?value3 :> ?sum3)
+             (c/sum ?value4 :> ?sum4))))
 
 (deftest t-tap-as-source-normal-empty-value
   (dotimes [counter 100]
@@ -172,14 +158,13 @@
                          "types" {"name"      "UTF8Type"
                                   "language"  "UTF8Type"
                                   "schmotes"  "Int32Type"
-                                  "votes"     "Int32Type"}})
-        query (<- [?count ?sum3 ?sum4]
-                  (tap ?value1 ?value2 ?value3 ?value4)
-                  (c/count ?count)
-                  (c/sum ?value3 :> ?sum3)
-                  (c/sum ?value4 :> ?sum4))]
-
-    (fact query => (produces [[100 4950 9900]]))))
+                                  "votes"     "Int32Type"}})]
+    (test?<- [[100 4950 9900]]
+             [?count ?sum3 ?sum4]
+             (tap ?value1 ?value2 ?value3 ?value4)
+             (c/count ?count)
+             (c/sum ?value3 :> ?sum3)
+             (c/sum ?value4 :> ?sum4))))
 
 (deftest t-cassandra-tap-as-source-with-where-statement
   (create-index :libraries_cql_3 :schmotes)
@@ -197,14 +182,13 @@
                          "types" {"name"      "UTF8Type"
                                   "language"  "UTF8Type"
                                   "schmotes"  "Int32Type"
-                                  "votes"     "Int32Type"}})
-        query (<- [?count ?sum3 ?sum4]
-                  (tap ?value1 ?value2 ?value3 ?value4)
-                  (c/count ?count)
-                  (c/sum ?value3 :> ?sum3)
-                  (c/sum ?value4 :> ?sum4))]
-
-    (fact query => (produces [[1 50 100]]))))
+                                  "votes"     "Int32Type"}})]
+    (test?<- [[1 50 100]]
+             [?count ?sum3 ?sum4]
+             (tap ?value1 ?value2 ?value3 ?value4)
+             (c/count ?count)
+             (c/sum ?value3 :> ?sum3)
+             (c/sum ?value4 :> ?sum4))))
 
 (deftest t-cassandra-tap-as-sink-compact-sorage
   (let [test-data [["Riak" "Erlang" (int 100)]
@@ -322,11 +306,9 @@
   (let [tap (create-tap {"db.columnFamily" "libraries_wide"
                          "types" {"name"      "UTF8Type"
                                   "language"  "UTF8Type"
-                                  "votes"     "Int32Type"}})
-        query (<- [?count ?sum]
-                  (tap ?value1 ?value2 ?value3)
-                  (c/count ?count)
-                  (c/sum ?value3 :> ?sum))]
-    (fact "Handles simple calculations"
-          query
-          => (produces [[100 4950]]))))
+                                  "votes"     "Int32Type"}})]
+    (test?<- [[100 4950]]
+             [?count ?sum]
+             (tap ?value1 ?value2 ?value3)
+             (c/count ?count)
+             (c/sum ?value3 :> ?sum))))

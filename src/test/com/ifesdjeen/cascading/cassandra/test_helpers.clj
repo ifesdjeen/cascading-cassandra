@@ -1,8 +1,7 @@
 (ns com.ifesdjeen.cascading.cassandra.test-helpers
   (:use cascalog.playground
         clojurewerkz.cassaforte.cql
-        clojurewerkz.cassaforte.query
-        [midje sweet cascalog])
+        clojurewerkz.cassaforte.query)
   (:require [clojurewerkz.cassaforte.embedded :as e]
             [clojurewerkz.cassaforte.client :as client]))
 

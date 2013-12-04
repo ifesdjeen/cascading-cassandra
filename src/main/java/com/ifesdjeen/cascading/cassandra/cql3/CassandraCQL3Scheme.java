@@ -19,7 +19,7 @@ import org.apache.cassandra.hadoop.cql3.CqlPagingInputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.RecordReader;
-import org.jsoup.helper.StringUtil;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -134,7 +134,7 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
 
     if (this.settings.containsKey("mappings.cqlKeys")) {
       List<String> keyMappings = (List<String>) this.settings.get("mappings.cqlKeys");
-      conf.set("row_key", StringUtil.join(keyMappings, ","));
+      conf.set("row_key", StringUtils.join(keyMappings, ","));
     } else {
       throw new RuntimeException("Can't sink without 'mappings.cqlKeys'");
     }
