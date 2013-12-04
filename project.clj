@@ -10,14 +10,11 @@
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
   :resource-paths    ["src/resources"]
-  :profiles {:provided {:dependencies   [[mccraigmccraig/cassandra-all "1.2.8-SNAPSHOT"
-                                          :exclusions [org.apache.hadoop
-                                                       org.apache.thrift/libthrift
-                                                       org.apache.httpcomponents/httpclient]]
-                                         ;; [org.apache.hadoop/hadoop-core "1.0.4"
-                                         ;;   :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
-                                         [org.apache.hadoop/hadoop-core "0.20.2"
-                                          :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
+  :profiles {:provided {:dependencies   [[org.apache.cassandra/cassandra-all "2.0.3"]
+                                         [org.apache.hadoop/hadoop-core "1.0.3"
+                                           :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
+                                         ;; [org.apache.hadoop/hadoop-core "0.20.2"
+                                         ;;  :exclusions [org.codehaus.jackson/jackson-mapper-asl]]
                                          ]}
              :dev      {:resource-paths ["src/resources"]
                         :jvm-opts       ["-server"
@@ -25,7 +22,8 @@
                                          "-javaagent:lib/jamm-0.2.5.jar"
                                          "-Xmx768m"]
                         :dependencies   [[org.xerial.snappy/snappy-java "1.0.5-M3"]
-                                         [clojurewerkz/cassaforte "1.2.0"
+                                         [org.apache.cassandra/cassandra-all "2.0.2"]
+                                         [clojurewerkz/cassaforte "1.3.0-beta4"
                                           :exclusions [org.apache.thrift/libthrift
                                                        org.apache.cassandra/cassandra-all]]
                                          [commons-lang/commons-lang "2.6"]]}}

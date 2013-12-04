@@ -54,6 +54,12 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
     ConfigHelper.setInputColumnFamily(conf, this.keyspace, this.columnFamily);
     conf.setInputFormat(CqlPagingInputFormat.class);
 
+    if (this.settings.containsKey("db.readConsistencyLevel")) {
+      ConfigHelper.setReadConsistencyLevel(conf, (String) this.settings.get("db.readConsistencyLevel"));
+    } else {
+      ConfigHelper.setReadConsistencyLevel(conf, "ONE");
+    }
+
     String sourceColumns = SettingsHelper.getSourceColumns(this.settings);
     if (sourceColumns != null) {
       CqlConfigHelper.setInputColumns(conf, sourceColumns);
@@ -131,6 +137,12 @@ public class CassandraCQL3Scheme extends BaseCassandraScheme {
                            JobConf conf) {
     super.sinkConfInit(process, tap, conf);
     conf.setOutputFormat(CqlOutputFormat.class);
+
+    if (this.settings.containsKey("db.readConsistencyLevel")) {
+      ConfigHelper.setReadConsistencyLevel(conf, (String) this.settings.get("db.readConsistencyLevel"));
+    } else {
+      ConfigHelper.setReadConsistencyLevel(conf, "ONE");
+    }
 
     if (this.settings.containsKey("mappings.cqlKeys")) {
       List<String> keyMappings = (List<String>) this.settings.get("mappings.cqlKeys");

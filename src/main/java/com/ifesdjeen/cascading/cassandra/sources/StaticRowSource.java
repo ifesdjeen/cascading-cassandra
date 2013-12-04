@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import cascading.tuple.Tuple;
 
 import org.apache.cassandra.db.marshal.AbstractType;
-import org.apache.cassandra.db.IColumn;
+import org.apache.cassandra.db.Column;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
 import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
@@ -27,7 +27,7 @@ public class StaticRowSource extends BaseThriftSource implements ISource {
   public Tuple source(Map<String, Object> settings,
                       Object boxedKey,
                       Object boxedColumns) throws IOException {
-    SortedMap<ByteBuffer, IColumn> columns = (SortedMap<ByteBuffer, IColumn>) boxedColumns;
+    SortedMap<ByteBuffer, Column> columns = (SortedMap<ByteBuffer, Column>) boxedColumns;
     ByteBuffer key = (ByteBuffer) boxedKey;
 
     Tuple result = new Tuple();
@@ -36,11 +36,11 @@ public class StaticRowSource extends BaseThriftSource implements ISource {
     Map<String, String> dataTypes = SettingsHelper.getTypes(settings);
     List<String> sourceMappings = SettingsHelper.getSourceMappings(settings);
 
-    Map<String, IColumn> columnsByStringName = new HashMap<String, IColumn>();
+    Map<String, Column> columnsByStringName = new HashMap<String, Column>();
     for (ByteBuffer columnName : columns.keySet()) {
       String stringName = ByteBufferUtil.string(columnName);
       logger.debug("column name: {}", stringName);
-      IColumn col = columns.get(columnName);
+      Column col = columns.get(columnName);
       logger.debug("column: {}", col);
       columnsByStringName.put(stringName, col);
     }
@@ -49,7 +49,7 @@ public class StaticRowSource extends BaseThriftSource implements ISource {
       AbstractType columnValueType = SerializerHelper.inferType(dataTypes.get(columnName));
       if (columnValueType != null) {
         try {
-          IColumn column = columnsByStringName.get(columnName);
+          Column column = columnsByStringName.get(columnName);
           ByteBuffer serializedVal = column.value();
           Object val = null;
           if (serializedVal != null) {

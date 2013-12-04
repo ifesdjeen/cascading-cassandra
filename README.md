@@ -70,6 +70,8 @@ you can use following code:
   * `db.inputPartitioner` - partitiner for DB used as source
   * `db.outputPartitioner` - partitiner for DB used as sink
   * `db.columnFamily` - column family  to use for sink or source
+  * `db.readConsistencyLevel` - consistency level for reads
+  * `db.writeConsistencyLevel` - consistency level for writes
 
 If you're not familiar with Static / Dynamic terminology, please refer to [this guide](http://clojurecassandra.info/articles/data_modelling.html)
 

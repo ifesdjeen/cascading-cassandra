@@ -67,6 +67,13 @@ public class CassandraScheme extends BaseCassandraScheme {
 
     ConfigHelper.setRangeBatchSize(conf, 1000);
 
+
+    if (this.settings.containsKey("db.readConsistencyLevel")) {
+      ConfigHelper.setReadConsistencyLevel(conf, (String) this.settings.get("db.readConsistencyLevel"));
+    } else {
+      ConfigHelper.setReadConsistencyLevel(conf, "ONE");
+    }
+
     if (this.settings.containsKey("source.predicate")) {
       ConfigHelper.setInputSlicePredicate(conf, (SlicePredicate) this.settings.get("source.predicate"));
     } else {
@@ -159,6 +166,13 @@ public class CassandraScheme extends BaseCassandraScheme {
                            JobConf conf) {
     super.sinkConfInit(process, tap, conf);
     conf.setOutputFormat(ColumnFamilyOutputFormat.class);
+
+    if (this.settings.containsKey("db.writeConsistencyLevel")) {
+      ConfigHelper.setWriteConsistencyLevel(conf, (String) this.settings.get("db.writeConsistencyLevel"));
+    } else {
+      ConfigHelper.setWriteConsistencyLevel(conf, "ONE");
+    }
+
   }
 
   /**

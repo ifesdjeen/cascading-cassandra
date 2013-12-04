@@ -12,7 +12,7 @@ import cascading.tuple.Tuple;
 
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.CompositeType;
-import org.apache.cassandra.db.IColumn;
+import org.apache.cassandra.db.Column;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
 import com.ifesdjeen.cascading.cassandra.hadoop.SerializerHelper;
@@ -25,7 +25,7 @@ public class DynamicRowSource extends BaseThriftSource implements ISource {
   public Tuple source(Map<String, Object> settings,
                       Object boxedKey,
                       Object boxedColumns) throws IOException {
-    SortedMap<ByteBuffer, IColumn> columns = (SortedMap<ByteBuffer, IColumn>) boxedColumns;
+    SortedMap<ByteBuffer, Column> columns = (SortedMap<ByteBuffer, Column>) boxedColumns;
     ByteBuffer key = (ByteBuffer) boxedKey;
 
     Tuple result = new Tuple();
@@ -43,7 +43,7 @@ public class DynamicRowSource extends BaseThriftSource implements ISource {
       columnValueType = SerializerHelper.inferType(dataTypes.get("columnValue"));
     }
 
-    for (IColumn column : columns.values()) {
+    for (Column column : columns.values()) {
       try {
         if (columnNameType instanceof CompositeType) {
           List components = (List) SerializerHelper.deserialize(column.name(), columnNameType);
