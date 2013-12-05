@@ -1,11 +1,11 @@
 (ns com.ifesdjeen.cascading.cassandra.test-helpers
-  (:use cascalog.playground
+  (:use ;; cascalog.playground
         clojurewerkz.cassaforte.cql
         clojurewerkz.cassaforte.query)
   (:require [clojurewerkz.cassaforte.embedded :as e]
             [clojurewerkz.cassaforte.client :as client]))
 
-(bootstrap-emacs)
+;; (bootstrap-emacs)
 
 (declare session)
 
