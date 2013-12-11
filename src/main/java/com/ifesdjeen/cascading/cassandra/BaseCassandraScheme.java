@@ -9,7 +9,7 @@ import cascading.tap.Tap;
 import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.fs.Path;
 
-import org.apache.cassandra.hadoop.ConfigHelper;
+import org.apache.cassandra.hadoop2.ConfigHelper;
 
 import java.util.*;
 
@@ -155,6 +155,7 @@ public abstract class BaseCassandraScheme extends Scheme<JobConf, RecordReader, 
 
   @Override
   public int hashCode() {
+    //new org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl()
     int result = super.hashCode();
     result = 31 * result + getPath().toString().hashCode();
     result = 31 * result + (host != null ? host.hashCode() : 0);
