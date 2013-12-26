@@ -5,8 +5,8 @@
   :license {:name "Double licensed under the Eclipse Public License (the same as Clojure) or the Apache Public License 2.0."}
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [cascalog/cascalog-core "2.0.0"]]
-  :aot           [com.ifesdjeen.cascading.cassandra.minitest]
-  :javac-options ["-target" "1.7" "-source" "1.7" "-Xlint:-options"]
+  ; :aot           [com.ifesdjeen.cascading.cassandra.minitest]
+  :javac-options ["-Xlint:-options"]
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
   :resource-paths    ["src/resources"]
