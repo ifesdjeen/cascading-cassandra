@@ -6,8 +6,8 @@ notifications:
   recipients:
     - oleksandr.petrov@gmail.com
 jdk:
-  - openjdk6
   - openjdk7
+  - oraclejdk7
 branches:
   only:
     - master
