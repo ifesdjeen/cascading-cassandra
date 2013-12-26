@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [cascalog/cascalog-core "2.0.0"]]
   ; :aot           [com.ifesdjeen.cascading.cassandra.minitest]
-  :javac-options ["-Xlint:-options"]
+  :javac-options ["-target" "1.6" "-source" "1.6" "-Xlint:-options"]
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
   :resource-paths    ["src/resources"]
