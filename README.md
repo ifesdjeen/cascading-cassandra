@@ -121,6 +121,8 @@ CREATE TABLE users (name varchar,
 WITH COMPACT STORAGE;
 ```
 
+__Please note that it is very important to add WITH COMPACT STORAGE__ to your table creation.
+
 Typically, data in such table looks like:
 
 ```
@@ -342,6 +344,19 @@ Jar is hosted on Clojars: https://clojars.org/cascading-cassandra
 ## This project supports the ClojureWerkz goals
 
 [ClojureWerkz](http://clojurewerkz.org/) is a growing collection of open-source, **batteries-included Clojure libraries** that emphasise modern targets, great documentation, and thorough testing. They've got a ton of great stuff, check 'em out!
+
+## Typical Problems
+
+If you see that in your stacktrace: 
+
+```
+Caused by: InvalidRequestException(why:Not enough bytes to read value of component 0)
+        at org.apache.cassandra.thrift.Cassandra$batch_mutate_result.read(Cassandra.java:20833)
+        at org.apache.thrift.TServiceClient.receiveBase(TServiceClient.java:78)
+```
+
+You've forgotten to addd "WITH COMPACT STORAGE" to your table creation script.
+
 
 ## License
 
