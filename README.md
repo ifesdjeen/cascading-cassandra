@@ -1,3 +1,11 @@
+# PROJECT IS SEARCHING FOR MAINTAINERS!
+
+Releases so far have been used in production in multiple companies. However, 
+at the moment Alex (@ifesdjeen) doesn't use Cassandra with Hadoop in production
+anymore. Therefore, keeping project up to date is hard and is nearly impossible, 
+since there's a lot of quircks and small things that go wrong with every
+release of both Hadoop and Cassandra.
+
 # Cascading Tap for Cassandra
 
 [![Build Status](https://secure.travis-ci.org/ifesdjeen/cascading-cassandra.png)](http://travis-ci.org/ifesdjeen/cascading-cassandra)
