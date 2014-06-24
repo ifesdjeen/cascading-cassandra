@@ -336,16 +336,16 @@ Jar is hosted on Clojars: https://clojars.org/cascading-cassandra
 ### Leiningen
 
 ```clojure
-[cascading-cassandra "1.0.0-rc5"]
+[cascading-cassandra "2.0.6"]
 ```
 
 ### Maven
 
 ```xml
 <dependency>
-  <groupId>com.clojurewerkz</groupId>
+  <groupId>cascading-cassandra</groupId>
   <artifactId>cascading-cassandra</artifactId>
-  <version>1.0.0-rc5</version>
+  <version>2.0.6</version>
 </dependency>
 ```
 
