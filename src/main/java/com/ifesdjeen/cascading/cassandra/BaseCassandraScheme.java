@@ -64,12 +64,12 @@ public abstract class BaseCassandraScheme extends Scheme<JobConf, RecordReader, 
 
     if (this.settings.containsKey("source.rangeBatchSize")) {
       ConfigHelper.setRangeBatchSize(conf, (Integer) this.settings.get("source.rangeBatchSize"));
-      logger.debug("HERE: rangeBatchSize: " +  this.settings.get("source.rangeBatchSize"));
+      logger.debug("`rangeBatchSize` is set to " +  this.settings.get("source.rangeBatchSize"));
     }
 
     if (this.settings.containsKey("source.inputSplitSize")) {
       ConfigHelper.setInputSplitSize(conf, (Integer) this.settings.get("source.inputSplitSize"));
-      logger.debug("HERE: inputSplitSize: " +  this.settings.get("source.inputSplitSize"));
+      logger.debug("`inputSplitSize` is set to " +  this.settings.get("source.inputSplitSize"));
     }
 
     if (this.settings.containsKey("cassandra.thrift.framed.size_mb")) {
