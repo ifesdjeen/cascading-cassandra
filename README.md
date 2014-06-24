@@ -1,3 +1,11 @@
+# PROJECT IS SEARCHING FOR MAINTAINERS!
+
+Releases so far have been used in production in multiple companies. However, 
+at the moment Alex (@ifesdjeen) doesn't use Cassandra with Hadoop in production
+anymore. Therefore, keeping project up to date is hard and is nearly impossible, 
+since there's a lot of quircks and small things that go wrong with every
+release of both Hadoop and Cassandra.
+
 # Cascading Tap for Cassandra
 
 [![Build Status](https://secure.travis-ci.org/ifesdjeen/cascading-cassandra.png)](http://travis-ci.org/ifesdjeen/cascading-cassandra)
@@ -120,6 +128,8 @@ CREATE TABLE users (name varchar,
                     PRIMARY KEY (name))
 WITH COMPACT STORAGE;
 ```
+
+__Please note that it is very important to add WITH COMPACT STORAGE__ to your table creation.
 
 Typically, data in such table looks like:
 
@@ -326,22 +336,35 @@ Jar is hosted on Clojars: https://clojars.org/cascading-cassandra
 ### Leiningen
 
 ```clojure
-[cascading-cassandra "1.0.0-rc5"]
+[cascading-cassandra "2.0.6"]
 ```
 
 ### Maven
 
 ```xml
 <dependency>
-  <groupId>com.clojurewerkz</groupId>
+  <groupId>cascading-cassandra</groupId>
   <artifactId>cascading-cassandra</artifactId>
-  <version>1.0.0-rc5</version>
+  <version>2.0.6</version>
 </dependency>
 ```
 
 ## This project supports the ClojureWerkz goals
 
 [ClojureWerkz](http://clojurewerkz.org/) is a growing collection of open-source, **batteries-included Clojure libraries** that emphasise modern targets, great documentation, and thorough testing. They've got a ton of great stuff, check 'em out!
+
+## Typical Problems
+
+If you see that in your stacktrace: 
+
+```
+Caused by: InvalidRequestException(why:Not enough bytes to read value of component 0)
+        at org.apache.cassandra.thrift.Cassandra$batch_mutate_result.read(Cassandra.java:20833)
+        at org.apache.thrift.TServiceClient.receiveBase(TServiceClient.java:78)
+```
+
+You've forgotten to addd "WITH COMPACT STORAGE" to your table creation script.
+
 
 ## License
 
@@ -363,3 +386,7 @@ the Apache Public License 2.0.
     Java and .NET applications. Take a look at YourKit's leading software products:
       * [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp) and
       * [YourKit .NET Profiler](http://www.yourkit.com/.net/profiler/index.jsp).
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/ifesdjeen/cascading-cassandra/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+

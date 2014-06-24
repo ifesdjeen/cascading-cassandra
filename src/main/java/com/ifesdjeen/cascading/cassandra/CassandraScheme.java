@@ -157,7 +157,20 @@ public class CassandraScheme extends BaseCassandraScheme {
                            Tap<JobConf, RecordReader, OutputCollector> tap,
                            JobConf conf) {
     super.sinkConfInit(process, tap, conf);
-    conf.setOutputFormat(ColumnFamilyOutputFormat.class);
+
+    if (this.settings.containsKey("sink.outputFormat")) {
+      String outputFormatName = (String)this.settings.get("sink.outputFormat");
+      try {
+        Class outputFormat = (Class<? extends OutputFormat>)Class.forName(outputFormatName);
+        conf.setOutputFormat(outputFormat);
+      }
+      catch (ClassNotFoundException e) {
+        throw new IllegalArgumentException("Class not found: " + outputFormatName, e);
+      }
+    }
+    else {
+      conf.setOutputFormat(ColumnFamilyOutputFormat.class);
+    }
   }
 
   /**
