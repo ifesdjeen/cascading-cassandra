@@ -9,7 +9,7 @@ import cascading.tap.Tap;
 import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.fs.Path;
 
-import org.apache.cassandra.hadoop.ConfigHelper;
+import org.apache.cassandra.hadoop2.ConfigHelper;
 
 import java.util.*;
 
@@ -64,10 +64,16 @@ public abstract class BaseCassandraScheme extends Scheme<JobConf, RecordReader, 
 
     if (this.settings.containsKey("source.rangeBatchSize")) {
       ConfigHelper.setRangeBatchSize(conf, (Integer) this.settings.get("source.rangeBatchSize"));
+      logger.debug("`rangeBatchSize` is set to " +  this.settings.get("source.rangeBatchSize"));
     }
 
     if (this.settings.containsKey("source.inputSplitSize")) {
       ConfigHelper.setInputSplitSize(conf, (Integer) this.settings.get("source.inputSplitSize"));
+      logger.debug("`inputSplitSize` is set to " +  this.settings.get("source.inputSplitSize"));
+    }
+
+    if (this.settings.containsKey("cassandra.thrift.framed.size_mb")) {
+      ConfigHelper.setThriftFramedTransportSizeInMb(conf, (Integer) this.settings.get("cassandra.thrift.framed.size_mb"));
     }
 
     if (this.settings.containsKey("cassandra.inputPartitioner")) {
@@ -155,6 +161,7 @@ public abstract class BaseCassandraScheme extends Scheme<JobConf, RecordReader, 
 
   @Override
   public int hashCode() {
+    //new org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl()
     int result = super.hashCode();
     result = 31 * result + getPath().toString().hashCode();
     result = 31 * result + (host != null ? host.hashCode() : 0);

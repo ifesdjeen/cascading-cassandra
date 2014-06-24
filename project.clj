@@ -1,10 +1,9 @@
-(defproject cascading-cassandra "1.0.0-SNAPSHOT"
+(defproject cascading-cassandra "2.0.7-HADOOP2"
   :description "Modern Cassandra tap for Cascading. Actually works with Cascading 2.0 and Cascalog 1.10."
   :url "https://github.com/ifesdjeen/cascading-cassandra"
   :min-lein-version "2.0.0"
   :license {:name "Double licensed under the Eclipse Public License (the same as Clojure) or the Apache Public License 2.0."}
-  :dependencies [
-                 ]
+  :dependencies []
   :aot           [com.ifesdjeen.cascading.cassandra.minitest]
   :javac-options ["-target" "1.6" "-source" "1.6" "-Xlint:-options"]
   :java-source-paths ["src/main/java"]

@@ -6,7 +6,6 @@ import com.ifesdjeen.cascading.cassandra.sinks.StaticRowSink;
 import com.ifesdjeen.cascading.cassandra.sources.DynamicRowSource;
 import com.ifesdjeen.cascading.cassandra.sources.ISource;
 import com.ifesdjeen.cascading.cassandra.sources.StaticRowSource;
-import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat;
 import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
@@ -21,9 +20,9 @@ import cascading.tuple.TupleEntry;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.mapred.*;
 
-import org.apache.cassandra.hadoop.ConfigHelper;
-
-import org.apache.cassandra.hadoop.ColumnFamilyInputFormat;
+import org.apache.cassandra.hadoop2.ConfigHelper;
+import org.apache.cassandra.hadoop2.ColumnFamilyOutputFormat;
+import org.apache.cassandra.hadoop2.ColumnFamilyInputFormat;
 
 import java.io.IOException;
 import java.util.*;
@@ -158,7 +157,20 @@ public class CassandraScheme extends BaseCassandraScheme {
                            Tap<JobConf, RecordReader, OutputCollector> tap,
                            JobConf conf) {
     super.sinkConfInit(process, tap, conf);
-    conf.setOutputFormat(ColumnFamilyOutputFormat.class);
+
+    if (this.settings.containsKey("sink.outputFormat")) {
+      String outputFormatName = (String)this.settings.get("sink.outputFormat");
+      try {
+        Class outputFormat = (Class<? extends OutputFormat>)Class.forName(outputFormatName);
+        conf.setOutputFormat(outputFormat);
+      }
+      catch (ClassNotFoundException e) {
+        throw new IllegalArgumentException("Class not found: " + outputFormatName, e);
+      }
+    }
+    else {
+      conf.setOutputFormat(ColumnFamilyOutputFormat.class);
+    }
   }
 
   /**
@@ -198,6 +210,7 @@ public class CassandraScheme extends BaseCassandraScheme {
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
+
   }
 
   protected ISource getSourceImpl() {
