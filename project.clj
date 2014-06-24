@@ -4,7 +4,7 @@
   :min-lein-version "2.0.0"
   :license {:name "Double licensed under the Eclipse Public License (the same as Clojure) or the Apache Public License 2.0."}
   :dependencies []
-  :aot           [com.ifesdjeen.cascading.cassandra.minitest]
+  ;;:aot           [com.ifesdjeen.cascading.cassandra.minitest]
   :javac-options ["-target" "1.6" "-source" "1.6" "-Xlint:-options"]
   :java-source-paths ["src/main/java"]
   :test-paths        ["src/test"]
